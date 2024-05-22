@@ -1,0 +1,26 @@
+version: '3.9'
+services:
+  fastify_backend:
+    container_name: fastify_backend
+    image: normanlitka/fastify_backend:0.0.1
+    build:
+      context: .
+    ports:
+      - '3000:3000'
+    env_file: .env
+    depends_on: 
+      - postgres
+
+  postgres:
+    container_name: postgres
+    hostname: postgres
+    image: 'postgres:13'
+    ports:
+      - '5432:5432'
+    restart: always
+    env_file: .env
+    volumes:
+      - fastify_volume:/var/lib/postgres/data
+
+volumes:
+  fastify_volume: {}
