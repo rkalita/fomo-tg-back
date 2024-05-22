@@ -6,7 +6,7 @@ const { message } = require('telegraf/filters');
 const { AccountAddress } = require('@aptos-labs/ts-sdk');
 const request = require('request');
 
-const bot = new Telegraf(token)
+const bot = new Telegraf(process.env.BOT_TOKEN)
 
 let userInfo;
 
