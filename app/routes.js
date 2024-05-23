@@ -73,7 +73,7 @@ async function routes(fastify, options) {
                 WHEN cola + ${recoveredBottlesCount} <= 4 THEN cola + ${recoveredBottlesCount}
                 ELSE 4
               END
-              WHERE tg_id = '${request.params.id}' RETURNING *;`);
+              WHERE tg_id = '${req.params.id}' RETURNING *;`);
             }
 
             user.rows[0].cola = inventory.rows[0].cola;
