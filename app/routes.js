@@ -66,7 +66,7 @@ async function routes(fastify, options) {
           const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60 * 60);
 
           if (timeDifferenceHours >= 6) {
-            const recoveredBottlesCount = Math.floor(timeDifferenceHours / 6);
+            const recoveredBottlesCount = Math.floor(timeDifferenceHours / 4);
 
             const inventory = await client.query(`UPDATE inventory
               SET cola = CASE
