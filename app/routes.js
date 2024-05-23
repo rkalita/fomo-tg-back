@@ -63,7 +63,7 @@ async function routes(fastify, options) {
           // Define differrence between now and first drink cola in day
           const firstDayDrinkDateTime = new Date(user.rows[0].first_day_drink);
           const currentDate = new Date();
-          const timeDifferenceHours = (currentDate - firstDayDrinkDateTime)  (1000 * 60 * 60);
+          const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60 * 60);
 
           if (timeDifferenceHours >= 6) {
             const recoveredBottlesCount = Math.floor(timeDifferenceHours / 6);
