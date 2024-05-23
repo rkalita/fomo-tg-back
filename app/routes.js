@@ -68,7 +68,7 @@ async function routes(fastify, options) {
           if (timeDifferenceHours >= 6) {
             const recoveredBottlesCount = Math.floor(timeDifferenceHours / 6);
 
-            inventory = await client.query(`UPDATE inventory
+            const inventory = await client.query(`UPDATE inventory
               SET cola = CASE
                 WHEN cola + ${recoveredBottlesCount} <= 4 THEN cola + ${recoveredBottlesCount}
                 ELSE 4
@@ -159,7 +159,7 @@ async function routes(fastify, options) {
 
         console.log(user.rows[0]);
     
-        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 10000}, energy=${user.rows[0].energy - taps} WHERE users.tg_id = '${req.params.user_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
+        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps} WHERE users.tg_id = '${req.params.user_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
 
         return {...user.rows[0]}
       })
