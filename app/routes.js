@@ -149,12 +149,13 @@ async function routes(fastify, options) {
     //TAP
     fastify.patch('/api/tap/:user_id', (req, reply) => {
       return fastify.pg.transact(async client => {
-        const taps = req.body.taps;
+        let taps = req.body.taps;
       
         let user = await client.query(`SELECT users.score, users.energy FROM users WHERE users.tg_id='${req.params.user_id}'`);
         let inventory = await client.query(`SELECT inventory.donut, inventory.gold_donut FROM inventory WHERE inventory.tg_id='${req.params.user_id}'`);
 
         if (+taps > user.rows[0].energy) {
+          taps = +user.rows[0].energy;
           reply.status(422).send(new Error('Invalid data'));
         }
 
