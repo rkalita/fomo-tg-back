@@ -158,7 +158,7 @@ async function routes(fastify, options) {
           reply.status(422).send(new Error('Invalid data'));
         }
 
-        inventory = await client.query(`UPDATE inventory SET donut=${inventory.rows[0].donut + +taps * 1000} WHERE tg_id=${req.params.user_id} RETURNING cola, super_cola, donut, gold_donut`);
+        inventory = await client.query(`UPDATE inventory SET donut=${inventory.rows[0].donut + +taps * 1000} WHERE tg_id='${req.params.user_id}' RETURNING cola, super_cola, donut, gold_donut`);
     
         user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps} WHERE tg_id = '${req.params.user_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
 
