@@ -28,7 +28,7 @@ async function routes(fastify, options) {
       return fastify.pg.transact(async client => {
 
         const users = await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ);');
-        const inventory = await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0);');
+        const inventory = await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0);');
     
         return {...users, ...inventory}
       })
@@ -56,7 +56,7 @@ async function routes(fastify, options) {
     fastify.get('/api/users/:id', (req, reply) => {
       return fastify.pg.transact(async client => {
 
-        const user = await client.query(`SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, inventory.cola, inventory.super_cola from users INNER JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.tg_id = '${req.params.id}'`);
+        const user = await client.query(`SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, inventory.cola, inventory.super_cola, inventory.donut, inventory.gold_donut from users INNER JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.tg_id = '${req.params.id}'`);
         const position = await client.query(`WITH ranked_table AS (SELECT *, ROW_NUMBER() OVER (ORDER BY score) AS row_num FROM "users") SELECT row_num FROM ranked_table WHERE "tg_id" = '${req.params.id}';`);
 
         if (user.rows[0].cola < 4 && user.rows[0].first_day_drink) {
@@ -89,7 +89,7 @@ async function routes(fastify, options) {
 
         const newUser = request.body;
         const users = await client.query(`INSERT into users (tg_id,tg_username,score) VALUES(${newUser.tg_id},'${newUser.tg_username}',0) ON CONFLICT DO NOTHING;`);
-        const inventory = await client.query(`INSERT into inventory (tg_id,cola,super_cola) VALUES(${newUser.tg_id},4,0) ON CONFLICT DO NOTHING;`);
+        const inventory = await client.query(`INSERT into inventory (tg_id,cola,super_cola,donut,gold_donut) VALUES(${newUser.tg_id},4,0,0) ON CONFLICT DO NOTHING;`);
     
         return {...users, ...inventory}
       })
@@ -152,12 +152,13 @@ async function routes(fastify, options) {
         const taps = req.body.taps;
       
         let user = await client.query(`SELECT users.score, users.energy FROM users WHERE users.tg_id='${req.params.user_id}'`);
+        let inventory = await client.query(`SELECT inventory.donut, inventory.gold_donut FROM inventory WHERE users.tg_id='${req.params.user_id}'`);
 
         if (+taps > user.rows[0].energy) {
           reply.status(422).send(new Error('Invalid data'));
         }
 
-        console.log(user.rows[0]);
+        inventory = await client.query(`UPDATE inventory SET donut=${inventory.rows[0].donut + +taps * 1000} WHERE inventory.tg_id=${req.params.user_id} RETURNING cola, super_cola, donut, gold_donut`);
     
         user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps} WHERE users.tg_id = '${req.params.user_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
 
