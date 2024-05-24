@@ -174,8 +174,8 @@ async function routes(fastify, options) {
       return fastify.pg.transact(async client => {
         const query = req.query;
         
-        if (query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
-          return query;
+        if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
+          return reply.status(422).send(new Error('Invalid data'));
         }
       
         const tg_id = await client.query(`SELECT users.tg_id FROM users WHERE users.wallet_id='${req.params.wallet_address}'`);
