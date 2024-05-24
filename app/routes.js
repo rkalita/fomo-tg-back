@@ -179,7 +179,7 @@ async function routes(fastify, options) {
         }
       
         const tg_id = await client.query(`SELECT tg_id FROM users WHERE wallet_address='${req.params.wallet_address}'`);
-        const inventory = await client.query(`UPDATE inventory SET ${query['item']}=${+query['count'] || 1} WHERE tg_id='${tg_id}' RETURNING *`);
+        const inventory = await client.query(`UPDATE inventory SET ${query['item']} + ${+query['count'] || 1} WHERE tg_id='${tg_id}' RETURNING *`);
 
         return inventory.rows[0];
       })
