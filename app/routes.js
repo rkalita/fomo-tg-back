@@ -74,9 +74,9 @@ async function routes(fastify, options) {
                 ELSE 4
               END
               WHERE tg_id = '${req.params.id}' RETURNING *;`);
-            }
 
             user.rows[0].cola = inventory.rows[0].cola;
+          }
         }
     
         return {...user.rows[0], rate: +position.rows[0].row_num};
