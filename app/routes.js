@@ -178,8 +178,8 @@ async function routes(fastify, options) {
           return reply.status(422).send(new Error('Invalid data'));
         }
       
-        const tg_id = await client.query(`SELECT tg_id FROM users WHERE wallet_address='${req.params.wallet_address}'`);
-        const inventory = await client.query(`UPDATE inventory SET ${query['item']} + ${+query['count'] || 1} WHERE tg_id='${tg_id}' RETURNING *`);
+        const user = await client.query(`SELECT tg_id FROM users WHERE wallet_address='${req.params.wallet_address}'`);
+        const inventory = await client.query(`UPDATE inventory SET ${query['item']}= ${query['item']} + ${+query['count'] || 1} WHERE tg_id='${user.rows[0].tg_id}' RETURNING *`);
 
         return inventory.rows[0];
       })
