@@ -75,7 +75,7 @@ async function routes(fastify, options) {
               END
               WHERE tg_id = '${req.params.id}' RETURNING *;`);
             
-              await client.query(`UPDATE users SET first_day_drink = ${user.rows[0].first_day_drink} + INTERVAL '6 hours'WHERE tg_id = '${req.params.id}';`);
+              await client.query(`UPDATE users SET first_day_drink = first_day_drink + INTERVAL '6 hours' WHERE tg_id = '${req.params.id}';`);
 
             user.rows[0].cola = inventory.rows[0].cola;
           }
