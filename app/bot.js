@@ -13,14 +13,16 @@ let userInfo;
 bot.command('start', (ctx) => {
     userInfo = ctx.chat;
 
+    
+
     request.post(
         `http://0.0.0.0:3000/api/users`,
         { json: { tg_id: userInfo?.id, tg_username: userInfo?.username } },
         function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                ctx.replyWithHTML(`Hello! Click on the 'Open app' button below to launch the application \n Write <code>/setWallet your_wallet_address</code> to set you Aptos wallet in application`,
+                ctx.replyWithHTML(`Hello! Click on the 'Open app' button below to launch the application \nWrite <code>/setWallet your_wallet_address</code> to set you Aptos wallet in application`,
                 Markup.inlineKeyboard([
-                    Markup.button.webApp('open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
+                    Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                 ]),);
                 // ctx.reply(
                 //     `Hello! Click on the 'Open app' button below to launch the application 
@@ -29,7 +31,7 @@ bot.command('start', (ctx) => {
                 //         Markup.button.webApp('open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                 //     ]),
                 // )
-                // ctx.replyWithPhoto({ source: 'https://tg-tap-app.web.app/img/mayor.png' });
+                ctx.replyWithPhoto({ source: ctx.chat?.photo?.big_file_id });
             } else {
                 ctx.reply(`Something went wrong`);
             }
