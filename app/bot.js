@@ -19,13 +19,10 @@ bot.command('start', (ctx) => {
         function (error, response, body) {
             if (!error && response.statusCode == 200) {
                 ctx.replyWithHTML(`
-                <img src="https://www.fomo-tap.online/img/mayor.png" alt="FOMO__mayor">
+                <img src="https://tg-tap-app.web.app/img/mayor.png" alt="FOMO__mayor">
                 <h2>Hello! Click on the 'Open app' button below to launch the application </h2>
                 <p>Write "/setWallet your_wallet_address" to set you Aptos wallet in application</p>
-                `,
-                Markup.inlineKeyboard([
-                    Markup.button.webApp('open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
-                ]),)
+                `)
                 // ctx.reply(
                 //     `Hello! Click on the 'Open app' button below to launch the application 
                 //     Write "/setWallet your_wallet_address" to set you Aptos wallet in application`,
