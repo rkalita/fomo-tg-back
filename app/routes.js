@@ -172,8 +172,8 @@ async function routes(fastify, options) {
     //Golden SWAP
     fastify.patch('/api/swap/:tg_id', (req, reply) => {
       return fastify.pg.transact(async client => {
-        let donuts = req.body.donuts;
         let goldenDonutsCount = 0;
+        const donuts = req.body.donuts;
         const inventory = await client.query(`SELECT inventory.donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
 
         if (donuts > inventory.rows[0].donut) {
@@ -181,9 +181,8 @@ async function routes(fastify, options) {
         }
 
         goldenDonutsCount = Math.floor(+donuts / 100000);
-        donuts = inventory.rows[0].donut - (goldenDonutsCount * 100000);
 
-        const inventoryUpdate = await client.query(`UPDATE inventory SET gold_donut=${goldenDonutsCount}, donut=${donuts} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut`);
+        const inventoryUpdate = await client.query(`UPDATE inventory SET gold_donut= gold_donut + ${goldenDonutsCount}, donut= donut - ${goldenDonutsCount * 100000} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut`);
 
         return inventoryUpdate.rows[0];
       })
