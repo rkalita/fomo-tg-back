@@ -56,7 +56,7 @@ async function routes(fastify, options) {
     fastify.get('/api/users/:id', (req, reply) => {
       return fastify.pg.transact(async client => {
 
-        const user = await client.query(`SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, users.first_day_drink, inventory.cola, inventory.super_cola, inventory.donut, inventory.gold_donut from users INNER JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.tg_id = '${req.params.id}'`);
+        let user = await client.query(`SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, users.first_day_drink, inventory.cola, inventory.super_cola, inventory.donut, inventory.gold_donut from users INNER JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.tg_id = '${req.params.id}'`);
         const position = await client.query(`WITH ranked_table AS (SELECT *, ROW_NUMBER() OVER (ORDER BY score DESC) AS row_num FROM "users") SELECT row_num FROM ranked_table WHERE "tg_id" = '${req.params.id}';`);
 
         if (user.rows[0].cola < 4 && user.rows[0].first_day_drink) {
@@ -74,6 +74,8 @@ async function routes(fastify, options) {
                 ELSE 4
               END
               WHERE tg_id = '${req.params.id}' RETURNING *;`);
+            
+              await client.query(`UPDATE users SET first_day_drink = ${user.rows[0].first_day_drink} + INTERVAL '6 hours'WHERE tg_id = '${req.params.id}';`);
 
             user.rows[0].cola = inventory.rows[0].cola;
           }
