@@ -170,7 +170,7 @@ async function routes(fastify, options) {
     });
       
     //Add stuff to inventory by wallet_id
-    fastify.get('/api/inventory/:wallet_id', (req, reply) => {
+    fastify.get('/api/inventory/:wallet_address', (req, reply) => {
       return fastify.pg.transact(async client => {
         const query = req.query;
         
