@@ -173,15 +173,31 @@ async function routes(fastify, options) {
     fastify.get('/api/inventory/:wallet_address', (req, reply) => {
       return fastify.pg.transact(async client => {
         const query = req.query;
+
+        if (!req.params.wallet_address) {
+          return reply.status(422).send(new Error('Invalid data'));
+        }
+
         
         if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
           return reply.status(422).send(new Error('Invalid data'));
         }
       
         const user = await client.query(`SELECT tg_id FROM users WHERE wallet_address='${req.params.wallet_address}'`);
-        const inventory = await client.query(`UPDATE inventory SET ${query['item']}= ${query['item']} + ${+query['count'] || 1} WHERE tg_id='${user.rows[0].tg_id}' RETURNING *`);
 
-        return inventory.rows[0];
+        if (!user.rows.length) {
+          return reply.status(422).send(new Error('Not found'));
+        }
+
+        const inventory = await client.query(`SELECT cola FROM inventory WHERE tg_id='${user.rows[0].tg_id}'`);
+
+        if (query['item'] == 'cola' && (inventory.rows[0] + +query['count'] > 4)) {
+          return reply.status(422).send(new Error('Cola cannot be more than 4 in sum'));
+        }
+
+        const inventoryUpdate = await client.query(`UPDATE inventory SET ${query['item']}= ${query['item']} + ${+query['count'] || 1} WHERE tg_id='${user.rows[0].tg_id}' RETURNING *`);
+
+        return inventoryUpdate.rows[0];
       })
     });
   
