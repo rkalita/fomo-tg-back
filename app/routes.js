@@ -191,7 +191,7 @@ async function routes(fastify, options) {
 
         const inventory = await client.query(`SELECT cola FROM inventory WHERE tg_id='${user.rows[0].tg_id}'`);
 
-        if (query['item'] == 'cola' && (inventory.rows[0] + +query['count'] > 4)) {
+        if (query['item'] == 'cola' && ((inventory.rows[0].cola + +query['count']) > 4)) {
           return reply.status(422).send(new Error('Cola cannot be more than 4 in sum'));
         }
 
