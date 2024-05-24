@@ -18,7 +18,10 @@ bot.command('start', (ctx) => {
         { json: { tg_id: userInfo?.id, tg_username: userInfo?.username } },
         function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                ctx.replyWithHTML(`<h2>Hello! Click on the 'Open app' button below to launch the application </h2><p>Write "/setWallet your_wallet_address" to set you Aptos wallet in application</p>`);
+                ctx.replyWithHTML(`<h2>Hello! Click on the 'Open app' button below to launch the application </h2><p>Write "/setWallet your_wallet_address" to set you Aptos wallet in application</p>`,
+                Markup.inlineKeyboard([
+                    Markup.button.webApp('open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
+                ]),);
                 // ctx.reply(
                 //     `Hello! Click on the 'Open app' button below to launch the application 
                 //     Write "/setWallet your_wallet_address" to set you Aptos wallet in application`,
@@ -26,7 +29,7 @@ bot.command('start', (ctx) => {
                 //         Markup.button.webApp('open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                 //     ]),
                 // )
-                ctx.replyWithPhoto({ source: 'https://tg-tap-app.web.app/img/mayor.png' });
+                // ctx.replyWithPhoto({ source: 'https://tg-tap-app.web.app/img/mayor.png' });
             } else {
                 ctx.reply(`Something went wrong`);
             }
