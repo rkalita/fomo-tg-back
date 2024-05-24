@@ -98,7 +98,7 @@ async function routes(fastify, options) {
     });
 
     //GULP
-    fastify.patch('/api/gulp/:user_id', (request, reply) => {
+    fastify.patch('/api/gulp/:tg_id', (request, reply) => {
       return fastify.pg.transact(async client => {
 
         const gulpItems = request.body;
@@ -111,7 +111,7 @@ async function routes(fastify, options) {
               WHEN cola - 1 < 0 THEN 0
               ELSE cola - 1
           END
-          WHERE tg_id = '${request.params.user_id}' RETURNING *;`);
+          WHERE tg_id = '${request.params.tg_id}' RETURNING *;`);
 
           if (inventory.rows[0].cola == 3) {
             user = await client.query(`UPDATE users
@@ -120,20 +120,20 @@ async function routes(fastify, options) {
                   ELSE 100
               END,
               first_day_drink = NOW()
-              WHERE tg_id = '${request.params.user_id}' RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
+              WHERE tg_id = '${request.params.tg_id}' RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
           } else {
             user = await client.query(`UPDATE users
             SET energy = CASE
                 WHEN energy + 25 <= 100 THEN energy + 25
                 ELSE 100
             END
-            WHERE tg_id = '${request.params.user_id}' RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
+            WHERE tg_id = '${request.params.tg_id}' RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
           }
 
         } else if (gulpItems.item === 'super_cola') {
 
           user = await client.query(`UPDATE users SET energy = 100 
-            WHERE tg_id = '${request.params.user_id}' 
+            WHERE tg_id = '${request.params.tg_id}' 
             RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
 
           inventory = await client.query(`UPDATE inventory
@@ -141,7 +141,7 @@ async function routes(fastify, options) {
             WHEN super_cola - 1 < 0 THEN 0
             ELSE super_cola - 1
           END
-          WHERE tg_id = '${request.params.user_id}' RETURNING *;`);
+          WHERE tg_id = '${request.params.tg_id}' RETURNING *;`);
         }
     
         return {...user.rows[0], ...inventory.rows[0]}
@@ -149,23 +149,43 @@ async function routes(fastify, options) {
     });
   
     //TAP
-    fastify.patch('/api/tap/:user_id', (req, reply) => {
+    fastify.patch('/api/tap/:tg_id', (req, reply) => {
       return fastify.pg.transact(async client => {
         let taps = req.body.taps;
       
-        let user = await client.query(`SELECT users.score, users.energy FROM users WHERE users.tg_id='${req.params.user_id}'`);
-        let inventory = await client.query(`SELECT inventory.donut, inventory.gold_donut FROM inventory WHERE inventory.tg_id='${req.params.user_id}'`);
+        let user = await client.query(`SELECT users.score, users.energy FROM users WHERE users.tg_id='${req.params.tg_id}'`);
+        let inventory = await client.query(`SELECT inventory.donut, inventory.gold_donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
 
         if (+taps > user.rows[0].energy) {
           taps = +user.rows[0].energy;
           reply.status(422).send(new Error('Invalid data'));
         }
 
-        inventory = await client.query(`UPDATE inventory SET donut=${inventory.rows[0].donut + +taps * 1000} WHERE tg_id='${req.params.user_id}' RETURNING cola, super_cola, donut, gold_donut`);
+        inventory = await client.query(`UPDATE inventory SET donut=${inventory.rows[0].donut + +taps * 1000} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut`);
     
-        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps} WHERE tg_id = '${req.params.user_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
+        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps} WHERE tg_id = '${req.params.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
 
         return {...user.rows[0], ...inventory.rows[0]}
+      })
+    });
+  
+    //Golden SWAP
+    fastify.patch('/api/swap/:tg_id', (req, reply) => {
+      return fastify.pg.transact(async client => {
+        let donuts = req.body.donuts;
+        let goldenDonutsCount = 0;
+        const inventory = await client.query(`SELECT inventory.donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
+
+        if (donuts > inventory.rows[0].donut) {
+          return reply.status(422).send(new Error('Invalid data'));
+        }
+
+        goldenDonutsCount = Math.floor(+donuts / 100000);
+        donuts = donuts - (goldenDonutsCount * 100000);
+
+        const inventoryUpdate = await client.query(`UPDATE inventory SET gold_donut=${goldenDonutsCount}, donut=${donuts} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut`);
+
+        return inventoryUpdate[0];
       })
     });
       
