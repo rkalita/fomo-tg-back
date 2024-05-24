@@ -18,7 +18,7 @@ bot.command('start', (ctx) => {
         { json: { tg_id: userInfo?.id, tg_username: userInfo?.username } },
         function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                ctx.replyWithHTML(`<h2>Hello! Click on the 'Open app' button below to launch the application </h2><p>Write "/setWallet your_wallet_address" to set you Aptos wallet in application</p>`,
+                ctx.replyWithHTML(`<h1>Hello! Click on the 'Open app' button below to launch the application </h1><p>Write <code>/setWallet your_wallet_address</code> to set you Aptos wallet in application</p>`,
                 Markup.inlineKeyboard([
                     Markup.button.webApp('open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                 ]),);
