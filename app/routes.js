@@ -171,10 +171,8 @@ async function routes(fastify, options) {
       
     //Add stuff to inventory by wallet_id
     fastify.get('/api/inventory/:wallet_id', (req, reply) => {
-      const query = req.query;
-      fastify.pg.connect(onConnect)
-
       return fastify.pg.transact(async client => {
+        const query = req.query;
         
         if (query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
           return reply.status(422).send(new Error('Invalid data'));
