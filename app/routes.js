@@ -168,6 +168,24 @@ async function routes(fastify, options) {
         return {...user.rows[0], ...inventory.rows[0]}
       })
     });
+      
+    //Add stuff to inventory by wallet_id
+    fastify.get('/api/inventory/:wallet_id', (req, reply) => {
+      const query = req.query;
+      fastify.pg.connect(onConnect)
+
+      return fastify.pg.transact(async client => {
+        
+        if (query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
+          return reply.status(422).send(new Error('Invalid data'));
+        }
+      
+        const tg_id = await client.query(`SELECT users.tg_id FROM users WHERE users.wallet_id='${req.params.wallet_address}'`);
+        const inventory = await client.query(`UPDATE inventory SET ${query['item']}=${+query['count'] || 1} WHERE tg_id='${req.params.user_id} RETURNING *`);
+
+        return inventory.rows[0];
+      })
+    });
   
     //DELETE ONE USER if exists
     // fastify.route({
