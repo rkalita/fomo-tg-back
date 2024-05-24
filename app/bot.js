@@ -24,14 +24,6 @@ bot.command('start', (ctx) => {
                 Markup.inlineKeyboard([
                     Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                 ]),);
-                // ctx.reply(
-                //     `Hello! Click on the 'Open app' button below to launch the application 
-                //     Write "/setWallet your_wallet_address" to set you Aptos wallet in application`,
-                //     Markup.inlineKeyboard([
-                //         Markup.button.webApp('open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
-                //     ]),
-                // )
-                ctx.replyWithPhoto({ source: ctx.chat?.photo?.big_file_id });
             } else {
                 ctx.reply(`Something went wrong`);
             }
