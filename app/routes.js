@@ -118,7 +118,7 @@ async function routes(fastify, options) {
                 WHEN energy + 25 <= 100 THEN energy + 25
                 ELSE 100
             END,
-            SET first_day_drink = CASE
+            first_day_drink = CASE
                 WHEN first_day_drink IS NULL THEN NOW()
                 WHEN first_day_drink <= NOW() - INTERVAL '24 hours' THEN NOW()
                 ELSE updatefirst_day_drinkd_at
