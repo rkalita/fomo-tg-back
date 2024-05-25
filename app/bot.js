@@ -22,7 +22,7 @@ bot.command('start', (ctx) => {
             if (!error && response.statusCode == 200) {
 
                 ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: "Welcome to Fomsfield, where even cats are crazy for donuts! Click on the 'Open app' button below to launch the application" }).then(() => {
-                    return ctx.reply(`Write <code>/setWallet your_wallet_address</code> to set you Aptos wallet in application`,
+                    return ctx.replyWithHTML(`Write <code>/setWallet your_wallet_address</code> to set you Aptos wallet in application`,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                         ]),);
