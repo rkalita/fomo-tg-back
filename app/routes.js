@@ -121,7 +121,7 @@ async function routes(fastify, options) {
             first_day_drink = CASE
                 WHEN first_day_drink IS NULL THEN NOW()
                 WHEN first_day_drink <= NOW() - INTERVAL '24 hours' THEN NOW()
-                ELSE first_day_drinkd
+                ELSE first_day_drink
             END
             WHERE tg_id = '${request.params.tg_id}' RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
         } else if (gulpItems.item === 'super_cola') {
