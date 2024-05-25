@@ -1,6 +1,6 @@
 
 const token = '7081527848:AAEXyXGNqhz-0pXozutq2RNwv4PAK-xDnmo';
-const webAppUrl = 'https://tg-tap-app.web.app';
+const webAppUrl = process.env.ALLOW_ORIGIN;
 const { Telegraf, Markup } = require('telegraf');
 const { message } = require('telegraf/filters');
 const { AccountAddress } = require('@aptos-labs/ts-sdk');
