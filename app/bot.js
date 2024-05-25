@@ -27,7 +27,7 @@ bot.command('start', (ctx) => {
                 // ]),);
 
                 // bot.sendPhoto(userInfo.id, 'https://aptosfomo-c4ea4.web.app/img/donut.png', { caption: "Here is your image!" });
-                ctx.replyWithPhoto({ source: 'https://aptosfomo-c4ea4.web.app/img/donut.png' }, { caption: "Here is your image!" });
+                ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/donut.png', { caption: "Here is your image!" });
             } else {
                 ctx.reply(`Something went wrong`);
             }
