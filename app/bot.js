@@ -20,14 +20,14 @@ bot.command('start', (ctx) => {
         { json: { tg_id: userInfo?.id, tg_username: userInfo?.username } },
         function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                // ctx.replyWithHTML(`Hello! Click on the 'Open app' button below to launch the application \nWrite <code>/setWallet your_wallet_address</code> to set you Aptos wallet in application`,
-                
-                // Markup.inlineKeyboard([
-                //     Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
-                // ]),);
 
                 // bot.sendPhoto(userInfo.id, 'https://aptosfomo-c4ea4.web.app/img/donut.png', { caption: "Here is your image!" });
-                ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/donut.png', { caption: "Here is your image!" });
+                ctx.replyWithPhoto({ source: '../FOMSFIELD.png' }, { caption: "Here is your image!" });
+                ctx.replyWithHTML(`Hello! Click on the 'Open app' button below to launch the application \nWrite <code>/setWallet your_wallet_address</code> to set you Aptos wallet in application`,
+                
+                Markup.inlineKeyboard([
+                    Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
+                ]),);
             } else {
                 ctx.reply(`Something went wrong`);
             }
