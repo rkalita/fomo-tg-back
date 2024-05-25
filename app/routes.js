@@ -63,10 +63,12 @@ async function routes(fastify, options) {
           // Define differrence between now and first drink cola in day
           const firstDayDrinkDateTime = new Date(user.rows[0].first_day_drink);
           const currentDate = new Date();
-          const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60 * 60);
+          // const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60 * 60);
 
-          if (timeDifferenceHours >= 6) {
-            const recoveredBottlesCount = Math.floor(timeDifferenceHours / 6);
+          const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60);
+
+          if (timeDifferenceHours >= 2) {
+            const recoveredBottlesCount = Math.floor(timeDifferenceHours / 2);
 
             const inventory = await client.query(`UPDATE inventory
               SET cola = CASE
@@ -113,23 +115,17 @@ async function routes(fastify, options) {
           END
           WHERE tg_id = '${request.params.tg_id}' RETURNING *;`);
 
-          if (inventory.rows[0].cola == 3) {
-            user = await client.query(`UPDATE users
-              SET energy = CASE
-                  WHEN energy + 25 <= 100 THEN energy + 25
-                  ELSE 100
-              END,
-              first_day_drink = NOW()
-              WHERE tg_id = '${request.params.tg_id}' RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
-          } else {
-            user = await client.query(`UPDATE users
+          user = await client.query(`UPDATE users
             SET energy = CASE
                 WHEN energy + 25 <= 100 THEN energy + 25
                 ELSE 100
+            END,
+            SET first_day_drink = CASE
+                WHEN first_day_drink IS NULL THEN NOW()
+                WHEN first_day_drink <= NOW() - INTERVAL '2 minutes' THEN NOW()
+                ELSE updatefirst_day_drinkd_at
             END
             WHERE tg_id = '${request.params.tg_id}' RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
-          }
-
         } else if (gulpItems.item === 'super_cola') {
 
           user = await client.query(`UPDATE users SET energy = 100 
@@ -137,11 +133,11 @@ async function routes(fastify, options) {
             RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
 
           inventory = await client.query(`UPDATE inventory
-          SET super_cola = CASE
-            WHEN super_cola - 1 < 0 THEN 0
-            ELSE super_cola - 1
-          END
-          WHERE tg_id = '${request.params.tg_id}' RETURNING *;`);
+            SET super_cola = CASE
+              WHEN super_cola - 1 < 0 THEN 0
+              ELSE super_cola - 1
+            END
+            WHERE tg_id = '${request.params.tg_id}' RETURNING *;`);
         }
     
         return {...user.rows[0], ...inventory.rows[0]}
