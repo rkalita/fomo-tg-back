@@ -63,12 +63,10 @@ async function routes(fastify, options) {
           // Define differrence between now and first drink cola in day
           const firstDayDrinkDateTime = new Date(user.rows[0].first_day_drink);
           const currentDate = new Date();
-          // const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60 * 60);
+          const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60 * 60);
 
-          const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60);
-
-          if (timeDifferenceHours >= 2) {
-            const recoveredBottlesCount = Math.floor(timeDifferenceHours / 2);
+          if (timeDifferenceHours >= 6) {
+            const recoveredBottlesCount = Math.floor(timeDifferenceHours / 6);
 
             const inventory = await client.query(`UPDATE inventory
               SET cola = CASE
@@ -77,7 +75,7 @@ async function routes(fastify, options) {
               END
               WHERE tg_id = '${req.params.id}' RETURNING *;`);
             
-              await client.query(`UPDATE users SET first_day_drink = first_day_drink + INTERVAL '2 minutes' WHERE tg_id = '${req.params.id}';`);
+              await client.query(`UPDATE users SET first_day_drink = first_day_drink + INTERVAL '6 hours' WHERE tg_id = '${req.params.id}';`);
 
             user.rows[0].cola = inventory.rows[0].cola;
           }
@@ -122,7 +120,7 @@ async function routes(fastify, options) {
             END,
             SET first_day_drink = CASE
                 WHEN first_day_drink IS NULL THEN NOW()
-                WHEN first_day_drink <= NOW() - INTERVAL '2 minutes' THEN NOW()
+                WHEN first_day_drink <= NOW() - INTERVAL '24 hours' THEN NOW()
                 ELSE updatefirst_day_drinkd_at
             END
             WHERE tg_id = '${request.params.tg_id}' RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
