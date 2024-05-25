@@ -21,8 +21,8 @@ bot.command('start', (ctx) => {
         function (error, response, body) {
             if (!error && response.statusCode == 200) {
 
-                ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: "Here is your image!" }).then(() => {
-                    return ctx.replyWithHTML(`Hello! Click on the 'Open app' button below to launch the application \nWrite <code>/setWallet your_wallet_address</code> to set you Aptos wallet in application`,
+                ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: "Welcome to Fomsfield, where even cats are crazy for donuts! Click on the 'Open app' button below to launch the application" }).then(() => {
+                    return ctx.replyWithHTML(`Write <code>/setWallet your_wallet_address</code> to set you Aptos wallet in application`,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                         ]),);
