@@ -35,7 +35,7 @@ bot.on('text', (ctx) => {
     const userInfo = ctx.chat;;
   
     if (userAnswer === correctAnswer) {
-      ctx.reply(`That's right!\n Click on the 'Open app' button below to launch the application`);
+      ;
       delete captchaData[ctx.from.id].then(() =>{
 
         return request.post(
@@ -44,11 +44,12 @@ bot.on('text', (ctx) => {
             function (error, response, body) {
 
                 if (!error && response.statusCode == 200) {
-    
-                    return ctx.replyWithHTML(`Write <code>/setWallet your_wallet_address</code> \uD83D\uDCCB to set you Aptos wallet in application`,
+                    ctx.reply(`That's right!\n Click on the 'Open app' button below to launch the application`).then(() => {
+                        return ctx.replyWithHTML(`Write <code>/setWallet your_wallet_address</code> \uD83D\uDCCB to set you Aptos wallet in application`,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                         ]),);
+                    })
                 } else {
                     ctx.reply(`Something went wrong`);
                 }
