@@ -7,32 +7,65 @@ const { AccountAddress } = require('@aptos-labs/ts-sdk');
 const request = require('request');
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
+// Store user CAPTCHA data
+const captchaData = {};
 
-let userInfo;
+function generateCaptcha() {
+    const num1 = Math.floor(Math.random() * 10);
+    const num2 = Math.floor(Math.random() * 10);
+    const donuts1 = '🍩'.repeat(num1);
+    const donuts2 = '🍩'.repeat(num2);
+    const question = `How many donuts are there?\n${donuts1} + ${donuts2}`;
+    const answer = num1 + num2;
+    return { question, answer };
+}
+
 
 bot.command('start', (ctx) => {
-    userInfo = ctx.chat;
-
+    const userInfo = ctx.chat;;
+    const { question, answer } = generateCaptcha();
+    captchaData[ctx.from.id] = answer; // Store answer for the user
     
+    ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: `Welcome to Fomsfield, where even cats are crazy for donuts! Before we proceed, please solve this CAPTCHA:\n${question}` }).then(() => {
+        return ctx.replyWithHTML(`Write <code>/setWallet your_wallet_address</code> \uD83D\uDCCB to set you Aptos wallet in application`,
+            Markup.inlineKeyboard([
+                Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
+            ]),);
+        });
+});
 
-    request.post(
-        `http://0.0.0.0:3000/api/users`,
-        { json: { tg_id: userInfo?.id, tg_username: userInfo?.username } },
-        function (error, response, body) {
-            if (!error && response.statusCode == 200) {
+// Handle text messages
+bot.on('text', (ctx) => {
+    const userAnswer = parseInt(ctx.message.text, 10);
+    const correctAnswer = captchaData[ctx.from.id];
+  
+    if (userAnswer === correctAnswer) {
+      ctx.reply(`That's right!\n Click on the 'Open app' button below to launch the application`);
+      delete captchaData[ctx.from.id].then(() =>{
 
-                ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: "Welcome to Fomsfield, where even cats are crazy for donuts! Click on the 'Open app' button below to launch the application" }).then(() => {
+        return request.post(
+            `http://0.0.0.0:3000/api/users`,
+            { json: { tg_id: userInfo?.id, tg_username: userInfo?.username } },
+            function (error, response, body) {
+
+                if (!error && response.statusCode == 200) {
+    
                     return ctx.replyWithHTML(`Write <code>/setWallet your_wallet_address</code> \uD83D\uDCCB to set you Aptos wallet in application`,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                         ]),);
-                  });
-            } else {
-                ctx.reply(`Something went wrong`);
+                } else {
+                    ctx.reply(`Something went wrong`);
+                }
             }
-        }
-    );
+        );
+        
+      }); // Clear CAPTCHA data for the user
+    } else {
+      ctx.reply('Incorrect answer. Please try again.');
+    }
 });
+
 
 bot.command('setWallet', (ctx) => {
     if (ctx.args.length) {
