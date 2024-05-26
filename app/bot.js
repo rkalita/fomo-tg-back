@@ -76,7 +76,7 @@ bot.on('text', (ctx) => {
 
                 if (!error && response.statusCode == 200) {
                     ctx.reply(`That's right!\n Click on the 'Open app' button below to launch the application`).then(() => {
-                        return ctx.replyWithHTML(`Write <code>/setwallet your_wallet_address</code> (<-------tap to copy) \uD83D\uDCCB to set you Aptos wallet in application`,
+                        return ctx.replyWithHTML(`Write <code>/setwallet your_wallet_address</code> (tap to copy) \uD83D\uDCCB to set you Aptos wallet in application`,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                         ]),);
