@@ -15,29 +15,24 @@ function generateCaptcha() {
     const num2 = Math.floor(Math.random() * 10);
     const donuts1 = '🍩'.repeat(num1);
     const donuts2 = '🍩'.repeat(num2);
-    const question = `How many donuts are there?\n${donuts1} + ${donuts2}`;
+    const question = `How many donuts are there?\n\n${donuts1} + ${donuts2}`;
     const answer = num1 + num2;
     return { question, answer };
 }
 
 
 bot.command('start', (ctx) => {
-    const userInfo = ctx.chat;;
     const { question, answer } = generateCaptcha();
     captchaData[ctx.from.id] = answer; // Store answer for the user
     
-    ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: `Welcome to Fomsfield, where even cats are crazy for donuts! Before we proceed, please solve this CAPTCHA:\n${question}` }).then(() => {
-        return ctx.replyWithHTML(`Write <code>/setWallet your_wallet_address</code> \uD83D\uDCCB to set you Aptos wallet in application`,
-            Markup.inlineKeyboard([
-                Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
-            ]),);
-        });
+    ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: `Welcome to Fomsfield, where even cats are crazy for donuts! Before we proceed, please solve this \nCAPTCHA:\n\n${question}` });
 });
 
 // Handle text messages
 bot.on('text', (ctx) => {
     const userAnswer = parseInt(ctx.message.text, 10);
     const correctAnswer = captchaData[ctx.from.id];
+    const userInfo = ctx.chat;;
   
     if (userAnswer === correctAnswer) {
       ctx.reply(`That's right!\n Click on the 'Open app' button below to launch the application`);
