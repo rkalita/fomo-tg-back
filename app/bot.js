@@ -36,7 +36,7 @@ bot.on('text', (ctx) => {
   
     if (userAnswer === correctAnswer) {
       ;
-      delete captchaData[ctx.from.id].then(() =>{
+      delete captchaData[ctx.from.id];
 
         return request.post(
             `http://0.0.0.0:3000/api/users`,
@@ -54,9 +54,7 @@ bot.on('text', (ctx) => {
                     ctx.reply(`Something went wrong`);
                 }
             }
-        );
-        
-      }); // Clear CAPTCHA data for the user
+        ); // Clear CAPTCHA data for the user
     } else {
       ctx.reply('Incorrect answer. Please try again.');
     }
