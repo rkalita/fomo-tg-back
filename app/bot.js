@@ -28,6 +28,37 @@ bot.command('start', (ctx) => {
     ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: `Welcome to Fomsfield, where even cats are crazy for donuts! Before we proceed, please solve this \nCAPTCHA:\n\n${question}` });
 });
 
+bot.command('setWallet', (ctx) => {
+    if (ctx.args.length) {
+        if (AccountAddress.isValid({input: ctx.args[0]}).valid) {
+
+            request.post(
+                `http://0.0.0.0:3000/api/wallet`,
+                { json: { wallet_address: ctx.args[0], tg_id: ctx.chat.id } },
+                function (error, response, body) {
+                    if (!error && response.statusCode == 200) {
+                        ctx.reply(`Your wallet address is noted: ${JSON.stringify(ctx.args[0])}`);
+                    } else {
+                        ctx.reply(`Something went wrong`);
+                    }
+                }
+            );
+        } else {
+            ctx.reply(`Invalid wallet address`)
+        }
+    } else {
+        ctx.reply(`Type: /setWallet your_wallet_address`);
+    }
+});
+
+bot.on(message('web_app_data'), async (ctx) => {
+    const data = ctx.webAppData?.data.json();
+
+    if (data?.feedback) {
+        ctx.reply(`Your feedback message: ${JSON.stringify(data)}` ?? 'empty message')
+    }
+});
+
 // Handle text messages
 bot.on('text', (ctx) => {
     const userAnswer = parseInt(ctx.message.text, 10);
@@ -57,38 +88,6 @@ bot.on('text', (ctx) => {
         ); // Clear CAPTCHA data for the user
     } else {
       ctx.reply('Incorrect answer. Please try again.');
-    }
-});
-
-
-bot.command('setWallet', (ctx) => {
-    if (ctx.args.length) {
-        if (AccountAddress.isValid({input: ctx.args[0]}).valid) {
-
-            request.post(
-                `http://0.0.0.0:3000/api/wallet`,
-                { json: { wallet_address: ctx.args[0], tg_id: ctx.chat.id } },
-                function (error, response, body) {
-                    if (!error && response.statusCode == 200) {
-                        ctx.reply(`Your wallet address is noted: ${JSON.stringify(ctx.args[0])}`);
-                    } else {
-                        ctx.reply(`Something went wrong`);
-                    }
-                }
-            );
-        } else {
-            ctx.reply(`Invalid wallet address`)
-        }
-    } else {
-        ctx.reply(`Type: /setWallet your_wallet_address`);
-    }
-});
-
-bot.on(message('web_app_data'), async (ctx) => {
-    const data = ctx.webAppData?.data.json();
-
-    if (data?.feedback) {
-        ctx.reply(`Your feedback message: ${JSON.stringify(data)}` ?? 'empty message')
     }
 });
 
