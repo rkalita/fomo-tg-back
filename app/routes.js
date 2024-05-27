@@ -1,3 +1,15 @@
+function generateHash() {
+  const input = 'referral_code_string';
+  // Generate SHA-256 hash
+  const hash = crypto.createHash('sha256').update(input).digest('base64');
+
+  // Ensure the hash fits within VARCHAR(20)
+  // Base64 encoding typically results in longer strings, so we need to trim it
+  const trimmedHash = hash.replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
+
+  return trimmedHash;
+}
+
 async function routes(fastify, options) {
     // Testing route
     fastify.get('/', async (request, reply) => {
@@ -27,7 +39,7 @@ async function routes(fastify, options) {
     fastify.get('/api/initDB', (req, reply) => {
       return fastify.pg.transact(async client => {
 
-        const users = await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ);');
+        const users = await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, referral_code VARCHAR(20) UNIQUE, invited_by_code VARCHAR(20), "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ);');
         const inventory = await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0);');
     
         return {...users, ...inventory}
@@ -90,7 +102,7 @@ async function routes(fastify, options) {
       return fastify.pg.transact(async client => {
 
         const newUser = request.body;
-        const users = await client.query(`INSERT into users (tg_id,tg_username,score,energy) VALUES(${newUser.tg_id},'${newUser.tg_username || 'DonutLover'}',0,50) ON CONFLICT DO NOTHING;`);
+        const users = await client.query(`INSERT into users (tg_id,tg_username,score,energy, referral_code) VALUES(${newUser.tg_id},'${newUser.tg_username || 'DonutLover'}',0,50,${generateHash()}) ON CONFLICT DO NOTHING;`);
         const inventory = await client.query(`INSERT into inventory (tg_id,cola,super_cola,donut,gold_donut) VALUES(${newUser.tg_id},2,0,0,0) ON CONFLICT DO NOTHING;`);
     
         return {...users, ...inventory}
@@ -213,22 +225,6 @@ async function routes(fastify, options) {
         return inventoryUpdate.rows[0];
       })
     });
-  
-    //DELETE ONE USER if exists
-    // fastify.route({
-    //   method: 'DELETE',
-    //   url: '/api/users/:id',
-    //   handler: async function (request, reply) {
-    //     fastify.pg.connect(onConnect);
-    //     function onConnect(err, client, release) {
-    //       if (err) return reply.send(err);
-    //       client.query(`DELETE FROM users WHERE tg_id=${request.params.id}`, function onResult(err, result) {
-    //         release();
-    //         reply.send(err || `Deleted: ${request.params.id}`);
-    //       });
-    //     }
-    //   },
-    // });
   }
   
   module.exports = routes;
