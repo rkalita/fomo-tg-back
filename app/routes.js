@@ -1,4 +1,4 @@
-function generateHash() {
+ function generateHash() {
   const input = 'referral_code_string';
   // Generate SHA-256 hash
   const hash = crypto.createHash('sha256').update(input).digest('base64');
@@ -102,7 +102,7 @@ async function routes(fastify, options) {
       return fastify.pg.transact(async client => {
 
         const newUser = request.body;
-        const users = await client.query(`INSERT into users (tg_id,tg_username,score,energy, referral_code) VALUES(${newUser.tg_id},'${newUser.tg_username || 'DonutLover'}',0,50,${generateHash()}) ON CONFLICT DO NOTHING;`);
+        const users = await client.query(`INSERT into users (tg_id,tg_username,score,energy) VALUES(${newUser.tg_id},'${newUser.tg_username || 'DonutLover'}',0,50}) ON CONFLICT DO NOTHING;`);
         const inventory = await client.query(`INSERT into inventory (tg_id,cola,super_cola,donut,gold_donut) VALUES(${newUser.tg_id},2,0,0,0) ON CONFLICT DO NOTHING;`);
     
         return {...users, ...inventory}
