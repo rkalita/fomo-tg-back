@@ -66,7 +66,6 @@ bot.on('text', (ctx) => {
     const userInfo = ctx.chat;;
   
     if (userAnswer === correctAnswer) {
-      ;
       delete captchaData[ctx.from.id];
 
         return request.post(
