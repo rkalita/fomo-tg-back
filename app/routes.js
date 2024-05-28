@@ -227,7 +227,7 @@ async function routes(fastify, options) {
           .map(b => String.fromCharCode(65 + b % 26))
           .join('');
 
-          await client.query(`UPDATE users SET referral_code = ${btoa(randomString).substring(0, 15)} WHERE tg_id='${user.tg_id}';`);
+          await client.query(`UPDATE users SET referral_code = '${btoa(randomString).substring(0, 15)}' WHERE tg_id='${user.tg_id}';`);
         }));
       }
 
