@@ -105,12 +105,12 @@ async function routes(fastify, options) {
             const refUser = await client.query(`SELECT tg_id FROM users WHERE referral_code='${newUser?.refCode}'`);
             if (refUser.rows?.length) {
               await client.query(`INSERT INTO refs (referral_id, referrer_id)
-              SELECT '${refUser?.tg_id}', '${newUser.tg_id}'
+              SELECT '${refUser.rows[0].tg_id}', '${newUser.tg_id}'
               WHERE NOT EXISTS (
                   SELECT 1
                   FROM refs
                   WHERE referrer_id = '${newUser.tg_id}'
-                    AND referral_id = '${refUser?.tg_id}'
+                    AND referral_id = '${refUser.rows[0].tg_id}'
               );`);
             }
           }
