@@ -94,11 +94,31 @@ async function routes(fastify, options) {
                             .map(b => String.fromCharCode(65 + b % 26))
                             .join('');
         const refCode = btoa(randomString).substring(0, 15);
-        
-        const users = await client.query(`INSERT into users (tg_id,tg_username,score,energy, referral_code) VALUES(${newUser.tg_id},'${newUser.tg_username || 'DonutLover'}',0,50,'${refCode}') ON CONFLICT DO NOTHING;`);
-        const inventory = await client.query(`INSERT into inventory (tg_id,cola,super_cola,donut,gold_donut) VALUES(${newUser.tg_id},2,0,0,0) ON CONFLICT DO NOTHING;`);
+
+        const userExists = await client.query(`SELECT * FROM users WHERE tg_id='${newUser.tg_id}'`);
+
+        if (!userExists?.rows?.length) {
+          const users = await client.query(`INSERT into users (tg_id,tg_username,score,energy, referral_code) VALUES(${newUser.tg_id},'${newUser.tg_username || 'DonutLover'}',0,50,'${refCode}') ON CONFLICT DO NOTHING;`);
+          await client.query(`INSERT into inventory (tg_id,cola,super_cola,donut,gold_donut) VALUES(${newUser.tg_id},2,0,0,0) ON CONFLICT DO NOTHING;`);
+  
+          if (users.rows?.length && newUser?.refCode) {
+            const refUser = await client.query(`SELECT tg_id FROM users WHERE referral_code='${newUser?.refCode}'`);
+            if (refUser.rows?.length) {
+              await client.query(`INSERT INTO refs (referral_id, referrer_id)
+              SELECT '${refUser?.tg_id}', '${newUser.tg_id}'
+              WHERE NOT EXISTS (
+                  SELECT 1
+                  FROM refs
+                  WHERE referrer_id = '${newUser.tg_id}'
+                    AND referral_id = '${refUser?.tg_id}'
+              );`);
+            }
+          }
     
-        return {...users, ...inventory}
+          return users.rows[0];
+        }
+    
+        return userExists.rows[0];
       })
     });
 

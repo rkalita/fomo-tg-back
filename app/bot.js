@@ -9,6 +9,7 @@ const request = require('request');
 const bot = new Telegraf(process.env.BOT_TOKEN)
 // Store user CAPTCHA data
 const captchaData = {};
+const refCode = {};
 
 function generateCaptcha() {
     const num1 = Math.floor(Math.random() * 10);
@@ -22,7 +23,13 @@ function generateCaptcha() {
 
 
 bot.command('start', (ctx) => {
+    
+});
+
+bot.start((ctx) => {
     const { question, answer } = generateCaptcha();
+    
+    refCode[ctx.from.id] = ctx.message.text.split(' ')[1];
     captchaData[ctx.from.id] = answer; // Store answer for the user
     
     ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: `Welcome to Fomsfield, where even cats are crazy for donuts! Before we proceed, please solve this \nCAPTCHA:\n\n${question}` });
@@ -63,14 +70,22 @@ bot.on(message('web_app_data'), async (ctx) => {
 bot.on('text', (ctx) => {
     const userAnswer = parseInt(ctx.message.text, 10);
     const correctAnswer = captchaData[ctx.from.id];
-    const userInfo = ctx.chat;;
+    const referralCode = refCode[ctx.from.id];
+    const userInfo = ctx.chat;
+    const bodyParams = { tg_id: userInfo?.id, tg_username: userInfo?.username, refCode: referralCode };
+
+    // Reply to the user https://t.me/tg_tap_bot?start=REFERRAL_CODE
+    if (referralCode) {
+        bodyParams['refCode'] = referralCode
+        delete referralCode[ctx.from.id];
+    }
   
     if (userAnswer === correctAnswer) {
       delete captchaData[ctx.from.id];
 
         return request.post(
             `http://0.0.0.0:3000/api/users`,
-            { json: { tg_id: userInfo?.id, tg_username: userInfo?.username } },
+            { json: bodyParams },
             function (error, response, body) {
 
                 if (!error && response.statusCode == 200) {
