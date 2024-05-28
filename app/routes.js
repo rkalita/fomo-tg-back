@@ -31,6 +31,13 @@ async function routes(fastify, options) {
         await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0);');
         await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
 
+        //INDEXES
+        await client.query('CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users (tg_id);');
+        await client.query('CREATE INDEX IF NOT EXISTS idx_users_score ON users (score);');
+        await client.query('CREATE INDEX IF NOT EXISTS idx_inventory_tg_id ON inventory (tg_id);');
+        await client.query('CREATE INDEX IF NOT EXISTS idx_refs_referrer_id ON refs (referrer_id);');
+        await client.query('CREATE INDEX IF NOT EXISTS idx_refs_rewarded ON refs (rewarded);');
+
         return true;
       })
     });
@@ -240,28 +247,6 @@ async function routes(fastify, options) {
       })
     });
 
-    // INIT TABLE. Launch just once to create the table
-    fastify.get('/api/updateDB', (req, reply) => {
-      const update = async (client, users) => {
-        await Promise.all(users.rows.map(async user => {
-          const randomString = Array.from(crypto.getRandomValues(new Uint8Array(15)))
-          .map(b => String.fromCharCode(65 + b % 26))
-          .join('');
-
-          await client.query(`UPDATE users SET referral_code = '${btoa(randomString).substring(0, 15)}' WHERE tg_id='${user.tg_id}';`);
-        }));
-      }
-
-      return fastify.pg.transact(async client => {
-
-        const users = await client.query('SELECT * from users;');
-
-        await update(client, users);
-    
-        return true;
-      });
-    });
-
     //CAPTCHA
     fastify.patch('/api/captcha/:tg_id', (request, reply) => {
       return fastify.pg.transact(async client => {
@@ -292,6 +277,57 @@ async function routes(fastify, options) {
         return {tps: params.tps, rfcd: params?.rfcd};
     
       })
+    });
+
+
+    // INITERNAL REF REWARDS CHECKER
+    fastify.get('/api/refCheck', (req, reply) => {
+      return fastify.pg.transact(async client => {
+
+        await client.query(`WITH eligible_referrers AS (
+          SELECT refs.referral_id
+          FROM refs
+          JOIN users ON refs.referrer_id = users.tg_id
+          WHERE users.score >= 100000 AND refs.rewarded IS NULL
+        )
+        UPDATE inventory
+        SET donut = donut + 25000
+        FROM eligible_referrers
+        WHERE inventory.tg_id = eligible_referrers.referral_id;`);
+
+        await client.query(`WITH eligible_referrers AS (
+          SELECT refs.referral_id
+          FROM refs
+          JOIN users ON refs.referrer_id = users.tg_id
+          WHERE users.score >= 100000 AND refs.rewarded IS NULL
+        )
+        UPDATE refs
+        SET rewarded = NOW()
+        FROM eligible_referrers
+        WHERE refs.referral_id = eligible_referrers.referral_id;`);
+    
+        return true;
+      });
+    });
+
+    // INIT TABLE. Launch just once to create the table
+    fastify.get('/api/updateDB', (req, reply) => {
+      const update = async (client, refs) => {
+        await Promise.all(refs.rows.map(async ref => {
+          const user = await client.query(`UPDATE users SET referral_code = '${btoa(randomString).substring(0, 15)}' WHERE tg_id='${user.tg_id}';`);
+        }));
+      }
+
+      
+
+      return fastify.pg.transact(async client => {
+
+        const refs = await client.query('SELECT * FROM refs WHERE rewarded IS NULL;');
+
+        await update(client, refs);
+    
+        return true;
+      });
     });
   }
   
