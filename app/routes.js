@@ -234,8 +234,7 @@ async function routes(fastify, options) {
 
         const inventory = await client.query(`ALTER TABLE users 
         ADD COLUMN last_taps_count integer NOT NULL DEFAULT 0,
-        ADD COLUMN captcha_rewarded_at TIMESTAMPTZ,
-        `);
+        ADD COLUMN captcha_rewarded_at TIMESTAMPTZ`);
     
         return refs;
       })
