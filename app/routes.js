@@ -223,7 +223,15 @@ async function routes(fastify, options) {
     fastify.get('/api/updateDB', (req, reply) => {
       return fastify.pg.transact(async client => {
 
-        const refs = await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
+        const users = await client.query('SELECT * from users;');
+
+        users.rows.each((user) => {
+          const randomString = Array.from(crypto.getRandomValues(new Uint8Array(15)))
+          .map(b => String.fromCharCode(65 + b % 26))
+          .join('');
+
+          client.query(`UPDATE users SET referral_code = ${btoa(randomString).substring(0, 15)} WHERE tg_id='${user.tg_id}';`);
+        })
     
         return refs;
       })
