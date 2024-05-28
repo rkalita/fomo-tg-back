@@ -169,7 +169,7 @@ async function routes(fastify, options) {
 
         inventory = await client.query(`UPDATE inventory SET donut=${inventory.rows[0].donut + +taps * 1000} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut`);
     
-        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps} WHERE tg_id = '${req.params.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
+        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps}, updated_at = NOW() WHERE tg_id = '${req.params.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
 
         return {...user.rows[0], ...inventory.rows[0]}
       })
@@ -223,6 +223,21 @@ async function routes(fastify, options) {
         const inventoryUpdate = await client.query(`UPDATE inventory SET ${query['item']}= ${query['item']} + ${+query['count'] || 1} WHERE tg_id='${user.rows[0].tg_id}' RETURNING *`);
 
         return inventoryUpdate.rows[0];
+      })
+    });
+
+    // INIT TABLE. Launch just once to create the table
+    fastify.get('/api/updateDB', (req, reply) => {
+      return fastify.pg.transact(async client => {
+
+        const refs = await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" varchar(250),"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
+
+        const inventory = await client.query(`ALTER TABLE users 
+        ADD COLUMN last_taps_count integer NOT NULL DEFAULT 0,
+        ADD COLUMN captcha_rewarded_at TIMESTAMPTZ,
+        `);
+    
+        return {...users, ...inventory}
       })
     });
   }
