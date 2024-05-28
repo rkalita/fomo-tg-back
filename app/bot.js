@@ -16,7 +16,7 @@ function generateCaptcha() {
     const num2 = Math.floor(Math.random() * 10);
     const donuts1 = '🍩'.repeat(num1);
     const donuts2 = '🍩'.repeat(num2);
-    const question = `How many donuts are there?\n\n${donuts1} + ${donuts2 || 0}`;
+    const question = `How many donuts are there?\n\n${donuts1} ${num1 && num2 ? '+' : ''} ${donuts2 || 0}`;
     const answer = num1 + num2;
     return { question, answer };
 }
