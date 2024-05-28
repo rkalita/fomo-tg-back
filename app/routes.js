@@ -128,12 +128,12 @@ async function routes(fastify, options) {
                 WHEN first_day_drink <= NOW() - INTERVAL '24 hours' THEN NOW()
                 ELSE first_day_drink
             END
-            WHERE tg_id = '${request.params.tg_id}' RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
+            WHERE tg_id = '${request.params.tg_id}' RETURNING tg_username, wallet_address, score, energy;`);
         } else if (gulpItems.item === 'super_cola') {
 
           user = await client.query(`UPDATE users SET energy = 100 
             WHERE tg_id = '${request.params.tg_id}' 
-            RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`);
+            RETURNING tg_username, wallet_address, score, energy;`);
 
           inventory = await client.query(`UPDATE inventory
             SET super_cola = CASE
@@ -258,8 +258,8 @@ async function routes(fastify, options) {
           WHERE tg_id='${request.params.tg_id}'
           AND last_taps_count = ${params.tps || 0}
           AND referral_code = '${params?.rfcd || 0}'
-          AND captcha_rewarded_at IS NULL OR captcha_rewarded_at <= NOW() - INTERVAL '24 hours'
-          RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`
+          AND (captcha_rewarded_at IS NULL OR captcha_rewarded_at <= NOW() - INTERVAL '24 hours')
+          RETURNING tg_username, wallet_address, score, energy;`
         );
         
         if (user.rows?.length) {
