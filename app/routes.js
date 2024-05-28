@@ -237,7 +237,7 @@ async function routes(fastify, options) {
         ADD COLUMN captcha_rewarded_at TIMESTAMPTZ,
         `);
     
-        return {...users, ...inventory}
+        return refs;
       })
     });
   }
