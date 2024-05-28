@@ -254,7 +254,7 @@ async function routes(fastify, options) {
         const jsonString = atob(captchaItems.hash);
         const params = JSON.parse(jsonString);
         
-        const user = await client.query(`SELECT * from users 
+        const user = await client.query(`SELECT tg_id from users 
           WHERE tg_id='${request.params.tg_id}'
           AND last_taps_count = ${params.tps || 0}
           AND referral_code = '${params?.rfcd || 0}'
@@ -262,8 +262,8 @@ async function routes(fastify, options) {
         );
         
         if (user.rows?.length) {
-          const inventory = await client.query(`UPDATE inventory SET donut = donut + 1000 WHERE tg_id='${user.tg_id}';`);
-          const userUpdated = await client.query(`UPDATE users SET captcha_rewarded_at=NOW() WHERE tg_id='${user.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy, referral_code;`);
+          const inventory = await client.query(`UPDATE inventory SET donut = donut + 1000 WHERE tg_id='${user.rows[0].tg_id}';`);
+          const userUpdated = await client.query(`UPDATE users SET captcha_rewarded_at=NOW() WHERE tg_id='${user.rows[0].tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy, referral_code;`);
 
           return userUpdated.rows[0];
         }
