@@ -90,7 +90,7 @@ async function routes(fastify, options) {
     fastify.post('/api/users', (request, reply) => {
       return fastify.pg.transact(async client => {
         const newUser = request.body;
-        const randomString = Array.from(crypto.getRandomValues(new Uint8Array(length)))
+        const randomString = Array.from(crypto.getRandomValues(new Uint8Array(8)))
                             .map(b => String.fromCharCode(65 + b % 26))
                             .join('');
         const refCode = btoa(randomString).substring(0, 8);
