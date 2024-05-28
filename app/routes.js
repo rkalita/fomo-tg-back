@@ -258,8 +258,7 @@ async function routes(fastify, options) {
           WHERE tg_id='${request.params.tg_id}'
           AND last_taps_count = ${params.tps || 0}
           AND referral_code = '${params?.rfcd || 0}'
-          AND (captcha_rewarded_at IS NULL OR captcha_rewarded_at <= NOW() - INTERVAL '24 hours')
-          RETURNING tg_username, wallet_address, score, energy;`
+          AND (captcha_rewarded_at IS NULL OR captcha_rewarded_at <= NOW() - INTERVAL '24 hours');`
         );
         
         if (user.rows?.length) {
