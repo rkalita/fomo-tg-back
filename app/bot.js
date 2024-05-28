@@ -72,7 +72,6 @@ bot.on('text', (ctx) => {
     // Reply to the user https://t.me/tg_tap_bot?start=REFERRAL_CODE
     if (referralCode) {
         bodyParams['refCode'] = referralCode;
-        ctx.reply(`Referral code ${bodyParams['refCode']} associated with your account.`);
     }
   
     if (userAnswer === correctAnswer) {
