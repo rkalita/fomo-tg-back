@@ -221,17 +221,21 @@ async function routes(fastify, options) {
 
     // INIT TABLE. Launch just once to create the table
     fastify.get('/api/updateDB', (req, reply) => {
-      return fastify.pg.transact(async client => {
-
-        const users = await client.query('SELECT * from users;');
-
-        for (user of users.rows) {
+      const update = async () => {
+        await Promise.all(users.rows.map(async user => {
           const randomString = Array.from(crypto.getRandomValues(new Uint8Array(15)))
           .map(b => String.fromCharCode(65 + b % 26))
           .join('');
 
-          client.query(`UPDATE users SET referral_code = ${btoa(randomString).substring(0, 15)} WHERE tg_id='${user.tg_id}';`);
-        }
+          await client.query(`UPDATE users SET referral_code = ${btoa(randomString).substring(0, 15)} WHERE tg_id='${user.tg_id}';`);
+        }));
+      }
+
+      return fastify.pg.transact(async client => {
+
+        const users = await client.query('SELECT * from users;');
+
+        await update();
     
         return true;
       });
