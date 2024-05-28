@@ -262,11 +262,14 @@ async function routes(fastify, options) {
         );
         
         if (user.rows?.length) {
-          const userUpdated = await client.query(`UPDATE inventory SET donut = donut + 1000 WHERE tg_id='${user.tg_id}';`);
+          const userUpdated = await client.query(`UPDATE inventory SET donut = donut + 1000 WHERE tg_id='${user.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy, referral_code;`);
           const inventory = await client.query(`UPDATE users SET captcha_rewarded_at=NOW() WHERE tg_id='${user.tg_id}';`);
+
+          return userUpdated.rows[0];
         }
+
+        return false;
     
-        return user.rows?.length ? userUpdated.rows[0] : false;
       })
     });
   }
