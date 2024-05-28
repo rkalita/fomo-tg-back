@@ -256,7 +256,7 @@ async function routes(fastify, options) {
         
         const user = await client.query(`SELECT * from users 
           WHERE tg_id='${request.params.tg_id}'
-          AND last_taps_count = ${params.tps || 0};
+          AND last_taps_count = ${params.tps || 0}
           AND referral_code = '${params?.rfcd || 0}'
           WHERE captcha_rewarded_at IS NULL OR captcha_rewarded_at <= NOW() - INTERVAL '24 hours'
           RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`
@@ -273,4 +273,3 @@ async function routes(fastify, options) {
   }
   
   module.exports = routes;
-  
