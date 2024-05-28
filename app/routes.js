@@ -162,7 +162,7 @@ async function routes(fastify, options) {
 
         inventory = await client.query(`UPDATE inventory SET donut=${inventory.rows[0].donut + +taps * 1000} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut`);
     
-        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps}, updated_at = NOW() WHERE tg_id = '${req.params.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
+        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps}, last_taps_count=${taps}, updated_at = NOW() WHERE tg_id = '${req.params.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
 
         return {...user.rows[0], ...inventory.rows[0]}
       })
