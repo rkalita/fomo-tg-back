@@ -21,11 +21,6 @@ function generateCaptcha() {
     return { question, answer };
 }
 
-
-bot.command('start', (ctx) => {
-    
-});
-
 bot.start((ctx) => {
     const { question, answer } = generateCaptcha();
     
