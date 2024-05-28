@@ -262,8 +262,8 @@ async function routes(fastify, options) {
         );
         
         if (user.rows?.length) {
-          await client.query(`UPDATE users SET referral_code = '${btoa(randomString).substring(0, 15)}' WHERE tg_id='${user.tg_id}';`);
-          await client.query(`UPDATE niventory SET donut = donut + 1000;`);
+          await client.query(`UPDATE inventory SET donut = donut + 1000 WHERE tg_id='${user.tg_id}';`);
+          await client.query(`UPDATE users SET captcha_rewarded_at=NOW() WHERE tg_id='${user.tg_id}';`);
         }
     
         return user.rows?.length ? user.rows[0] : false;
