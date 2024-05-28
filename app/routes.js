@@ -225,16 +225,16 @@ async function routes(fastify, options) {
 
         const users = await client.query('SELECT * from users;');
 
-        users.rows.each((user) => {
+        for (user of users.rows) {
           const randomString = Array.from(crypto.getRandomValues(new Uint8Array(15)))
           .map(b => String.fromCharCode(65 + b % 26))
           .join('');
 
           client.query(`UPDATE users SET referral_code = ${btoa(randomString).substring(0, 15)} WHERE tg_id='${user.tg_id}';`);
-        })
+        }
     
-        return refs;
-      })
+        return true;
+      });
     });
   }
   
