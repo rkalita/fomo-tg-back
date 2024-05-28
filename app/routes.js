@@ -57,7 +57,7 @@ async function routes(fastify, options) {
     fastify.get('/api/users/:id', (req, reply) => {
       return fastify.pg.transact(async client => {
 
-        let user = await client.query(`SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, users.first_day_drink, inventory.cola, inventory.super_cola, inventory.donut, inventory.gold_donut from users INNER JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.tg_id = '${req.params.id}'`);
+        let user = await client.query(`SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, users.first_day_drink, users.referral_code, inventory.cola, inventory.super_cola, inventory.donut, inventory.gold_donut from users INNER JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.tg_id = '${req.params.id}'`);
         const position = await client.query(`WITH ranked_table AS (SELECT *, ROW_NUMBER() OVER (ORDER BY score DESC) AS row_num FROM "users") SELECT row_num FROM ranked_table WHERE "tg_id" = '${req.params.id}';`);
 
         if (user.rows[0].cola < 4 && user.rows[0].first_day_drink) {
@@ -162,7 +162,7 @@ async function routes(fastify, options) {
 
         inventory = await client.query(`UPDATE inventory SET donut=${inventory.rows[0].donut + +taps * 1000} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut`);
     
-        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps}, last_taps_count=${taps}, updated_at = NOW() WHERE tg_id = '${req.params.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy`);
+        user = await client.query(`UPDATE users SET score=${user.rows[0].score + +taps * 1000}, energy=${user.rows[0].energy - taps}, last_taps_count=${taps}, updated_at = NOW() WHERE tg_id = '${req.params.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy, referral_code`);
 
         return {...user.rows[0], ...inventory.rows[0]}
       })
@@ -239,6 +239,36 @@ async function routes(fastify, options) {
     
         return true;
       });
+    });
+
+    //CAPTCHA
+    fastify.patch('/api/captcha/:tg_id', (request, reply) => {
+      return fastify.pg.transact(async client => {
+
+        const captchaItems = request.body;
+
+        if (!captchaItems.hash) {
+          return;
+        }
+        
+        const jsonString = atob(captchaItems.hash);
+        const params = JSON.parse(jsonString);
+        
+        const user = await client.query(`SELECT * from users 
+          WHERE tg_id='${request.params.tg_id}'
+          AND last_taps_count = ${params.tps || 0};
+          AND referral_code = '${params?.rfcd || 0}'
+          WHERE captcha_rewarded_at IS NULL OR captcha_rewarded_at <= NOW() - INTERVAL '24 hours'
+          RETURNING users.tg_username, users.wallet_address, users.score, users.energy;`
+        );
+        
+        if (user.rows?.length) {
+          await client.query(`UPDATE users SET referral_code = '${btoa(randomString).substring(0, 15)}' WHERE tg_id='${user.tg_id}';`);
+          await client.query(`UPDATE niventory SET donut = donut + 1000;`);
+        }
+    
+        return user.rows?.length ? user.rows[0] : false;
+      })
     });
   }
   
