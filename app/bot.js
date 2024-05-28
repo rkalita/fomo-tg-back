@@ -16,7 +16,7 @@ function generateCaptcha() {
     const num2 = Math.floor(Math.random() * 10);
     const donuts1 = '🍩'.repeat(num1);
     const donuts2 = '🍩'.repeat(num2);
-    const question = `How many donuts are there?\n\n${donuts1} + ${donuts2}`;
+    const question = `How many donuts are there?\n\n${donuts1} + ${donuts2 || 0}`;
     const answer = num1 + num2;
     return { question, answer };
 }
@@ -71,8 +71,8 @@ bot.on('text', (ctx) => {
 
     // Reply to the user https://t.me/tg_tap_bot?start=REFERRAL_CODE
     if (referralCode) {
-        bodyParams['refCode'] = referralCode
-        delete referralCode[ctx.from.id];
+        bodyParams['refCode'] = referralCode;
+        ctx.reply(`Referral code ${bodyParams['refCode']} associated with your account.`);
     }
   
     if (userAnswer === correctAnswer) {
