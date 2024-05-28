@@ -268,7 +268,7 @@ async function routes(fastify, options) {
           return userUpdated.rows[0];
         }
 
-        return false;
+        return {tps: params.tps, rfcd: params?.rfcd};
     
       })
     });
