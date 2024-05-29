@@ -274,7 +274,7 @@ async function routes(fastify, options) {
           return userUpdated.rows[0];
         }
 
-        return {tps: params.tps, rfcd: params?.rfcd};
+        return {hash: captchaItems?.hash};
     
       })
     });
