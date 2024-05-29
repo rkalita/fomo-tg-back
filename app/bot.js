@@ -39,7 +39,7 @@ bot.command('setwallet', (ctx) => {
                 { json: { wallet_address: ctx.args[0], tg_id: ctx.chat.id } },
                 function (error, response, body) {
                     if (!error && response.statusCode == 200) {
-                        ctx.reply(`Your wallet address is noted: ${JSON.stringify(ctx.args[0])}`);
+                        ctx.replyWithHTML(`Your wallet address is noted!\n\nAnd don't forget to join our socials to keep up with all the news!\n\nX (formerly Twitter):\nhttps://x.com/AptosFomo\n\nTG Group:\nhttps://t.me/aptosfomo\n\n`);
                     } else {
                         ctx.reply(`Something went wrong`);
                     }
@@ -84,7 +84,7 @@ bot.on('text', (ctx) => {
 
                 if (!error && response.statusCode == 200) {
                     ctx.reply(`That's right!\n Click on the 'Open app' button below to launch the application`).then(() => {
-                        return ctx.replyWithHTML(`Write <code>/setwallet your_wallet_address</code> (tap to copy) \uD83D\uDCCB to set you Aptos wallet in application\n\nAnd don't forget to join our socials to keep up with all the news!\n\n <a href="https://x.com/AptosFomo">X (formerly Twitter)</a>\n\n<a href="https://t.me/aptosfomo">TG Group:</a>`,
+                        return ctx.replyWithHTML(`Write <code>/setwallet your_wallet_address</code> (tap to copy) \uD83D\uDCCB to set you Aptos wallet in application`,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                         ]),);
