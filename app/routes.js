@@ -282,6 +282,12 @@ async function routes(fastify, options) {
 
     // INITERNAL REF REWARDS CHECKER
     fastify.get('/api/refCheck', (req, reply) => {
+      const query = req.query;
+
+      if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
+        return reply.status(422).send(new Error('Invalid data'));
+      }
+      
       return fastify.pg.transact(async client => {
 
         await client.query(`WITH eligible_referrers AS (
@@ -312,6 +318,12 @@ async function routes(fastify, options) {
 
     // INIT TABLE. Launch just once to create the table
     fastify.get('/api/updateDB', (req, reply) => {
+      const query = req.query;
+
+      if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
+        return reply.status(422).send(new Error('Invalid data'));
+      }
+      
       const update = async (client, refs) => {
         await Promise.all(refs.rows.map(async ref => {
           const user = await client.query(`UPDATE users SET referral_code = '${btoa(randomString).substring(0, 15)}' WHERE tg_id='${user.tg_id}';`);
