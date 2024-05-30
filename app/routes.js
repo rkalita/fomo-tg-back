@@ -260,6 +260,8 @@ async function routes(fastify, options) {
       
       return fastify.pg.transact(async client => {
         const body = req.body;
+
+        console.log(`gift request: ${JSON.stringify(req)}`);
         
         if (!body?.secret || body?.secret !== process.env.INVENTORY_SECRET) {
           return reply.status(422).send(new Error('Invalid data'));
