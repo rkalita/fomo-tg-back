@@ -271,7 +271,7 @@ async function routes(fastify, options) {
           return reply.status(422).send(new Error('Invalid data'));
         }
       
-        const users = await client.query(`SELECT users.tg_id, users.wallet_address, inventory.cola FROM users JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.wallet_address IN '${body?.wallets.map(item => `'${item}'`).join(', ')}'`);
+        const users = await client.query(`SELECT users.tg_id, users.wallet_address, inventory.cola FROM users JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.wallet_address IN ${body?.wallets.map(item => `'${item}'`).join(', ')}`);
 
         if (!users.rows.length) {
           return reply.status(422).send(new Error('Not found'));
