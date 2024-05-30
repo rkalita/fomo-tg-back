@@ -259,7 +259,7 @@ async function routes(fastify, options) {
       }
       
       return fastify.pg.transact(async client => {
-        const body = request.body;
+        const body = req.body;
         
         if (!body?.secret || body?.secret !== process.env.INVENTORY_SECRET) {
           return reply.status(422).send(new Error('Invalid data'));
