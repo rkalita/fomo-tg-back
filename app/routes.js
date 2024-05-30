@@ -50,7 +50,7 @@ async function routes(fastify, options) {
         if (err) return reply.send(err)
     
         client.query(
-          'SELECT users.tg_username, users.score from users ORDER BY users.score DESC LIMIT 100',
+          'SELECT users.tg_username, users.score from users ORDER BY users.score DESC, users.tg_username LIMIT 100',
           function onResult (err, result) {
             
             release()
@@ -65,7 +65,7 @@ async function routes(fastify, options) {
       return fastify.pg.transact(async client => {
 
         let user = await client.query(`SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, users.first_day_drink, users.referral_code, inventory.cola, inventory.super_cola, inventory.donut, inventory.gold_donut from users INNER JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.tg_id = '${req.params.id}'`);
-        const position = await client.query(`WITH ranked_table AS (SELECT *, ROW_NUMBER() OVER (ORDER BY score DESC) AS row_num FROM "users") SELECT row_num FROM ranked_table WHERE "tg_id" = '${req.params.id}';`);
+        const position = await client.query(`WITH ranked_table AS (SELECT *, ROW_NUMBER() OVER (ORDER BY score DESC, users.tg_username) AS row_num FROM "users") SELECT row_num FROM ranked_table WHERE "tg_id" = '1975853844';`);
         const invited = await client.query(`SELECT COUNT(*) AS count FROM refs WHERE referral_id='${req.params.id}'`)
 
         if (user.rows[0].cola < 4 && user.rows[0].first_day_drink) {
@@ -291,13 +291,13 @@ async function routes(fastify, options) {
       return fastify.pg.transact(async client => {
 
         await client.query(`WITH eligible_referrers AS (
-          SELECT refs.referral_id
+          SELECT refs.referral_id, COUNT(*) AS referrers_count
           FROM refs
           JOIN users ON refs.referrer_id = users.tg_id
           WHERE users.score >= 100000 AND refs.rewarded IS NULL
         )
         UPDATE inventory
-        SET donut = donut + 25000
+        SET donut = donut + (25000 * eligible_referrers.referrers_count)
         FROM eligible_referrers
         WHERE inventory.tg_id = eligible_referrers.referral_id;`);
 
