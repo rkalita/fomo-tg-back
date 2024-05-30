@@ -331,6 +331,7 @@ async function routes(fastify, options) {
           FROM refs
           JOIN users ON refs.referrer_id = users.tg_id
           WHERE users.score >= 100000 AND refs.rewarded IS NULL
+          GROUP BY refs.referral_id
         )
         UPDATE inventory
         SET donut = donut + (25000 * eligible_referrers.referrers_count)
