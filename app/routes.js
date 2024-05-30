@@ -247,8 +247,8 @@ async function routes(fastify, options) {
       })
     });
 
-    //ADD STUFF PATCH
-    fastify.patch('/api/gift', (req, reply) => {
+    //ADD STUFF POST
+    fastify.post('/api/gift', (req, reply) => {
 
       console.log(`gift request: ${JSON.stringify(req.body)}`);
 
