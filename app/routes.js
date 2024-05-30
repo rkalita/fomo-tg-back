@@ -65,7 +65,7 @@ async function routes(fastify, options) {
       return fastify.pg.transact(async client => {
 
         let user = await client.query(`SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, users.first_day_drink, users.referral_code, inventory.cola, inventory.super_cola, inventory.donut, inventory.gold_donut from users INNER JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.tg_id = '${req.params.id}'`);
-        const position = await client.query(`WITH ranked_table AS (SELECT *, ROW_NUMBER() OVER (ORDER BY score DESC, users.tg_username) AS row_num FROM "users") SELECT row_num FROM ranked_table WHERE "tg_id" = '1975853844';`);
+        const position = await client.query(`WITH ranked_table AS (SELECT *, ROW_NUMBER() OVER (ORDER BY score DESC, users.tg_username) AS row_num FROM "users") SELECT row_num FROM ranked_table WHERE "tg_id" = '${req.params.id}';`);
         const invited = await client.query(`SELECT COUNT(*) AS count FROM refs WHERE referral_id='${req.params.id}'`)
 
         if (user.rows[0].cola < 4 && user.rows[0].first_day_drink) {
