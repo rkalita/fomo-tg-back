@@ -250,6 +250,8 @@ async function routes(fastify, options) {
     //ADD STUFF PATCH
     fastify.patch('/api/gift', (req, reply) => {
 
+      console.log(`gift request: ${JSON.stringify(req.body)}`);
+
       const updateInventory = async function(client, users, item, count) {
         for (const user of users) {
           if (item !== 'cola') {
@@ -260,8 +262,6 @@ async function routes(fastify, options) {
       
       return fastify.pg.transact(async client => {
         const body = req.body;
-
-        console.log(`gift request: ${JSON.stringify(req)}`);
         
         if (!body?.secret || body?.secret !== process.env.INVENTORY_SECRET) {
           return reply.status(422).send(new Error('Invalid data'));
