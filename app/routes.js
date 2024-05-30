@@ -215,7 +215,7 @@ async function routes(fastify, options) {
       })
     });
       
-    //Add stuff to inventory by wallet_id
+    //ADD STUFF GET
     fastify.get('/api/inventory/:wallet_address', (req, reply) => {
       return fastify.pg.transact(async client => {
         const query = req.query;
@@ -244,6 +244,40 @@ async function routes(fastify, options) {
         const inventoryUpdate = await client.query(`UPDATE inventory SET ${query['item']}= ${query['item']} + ${+query['count'] || 1} WHERE tg_id='${user.rows[0].tg_id}' RETURNING *`);
 
         return inventoryUpdate.rows[0];
+      })
+    });
+
+    //ADD STUFF PATCH
+    fastify.patch('/api/gift', (req, reply) => {
+
+      const updateInventory = async function(client, users, item, count) {
+        for (const user of users) {
+          if (item !== 'cola') {
+            await client.query(`UPDATE inventory SET ${item}= ${item} + ${+count || 1} WHERE tg_id='${user.tg_id}' RETURNING *`);
+          }
+        }
+      }
+      
+      return fastify.pg.transact(async client => {
+        const body = request.body;
+        
+        if (!body?.secret || body?.secret !== process.env.INVENTORY_SECRET) {
+          return reply.status(422).send(new Error('Invalid data'));
+        }
+
+        if (!body?.wallets || !body?.wallets?.length) {
+          return reply.status(422).send(new Error('Invalid data'));
+        }
+      
+        const users = await client.query(`SELECT users.tg_id, users.wallet_address, inventory.cola FROM users JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.wallet_address IN '${body?.wallets.map(item => `'${item}'`).join(', ')}'`);
+
+        if (!users.rows.length) {
+          return reply.status(422).send(new Error('Not found'));
+        }
+
+        await updateInventory(client, users.rows, body.item, body.count);
+
+        return true;
       })
     });
 
