@@ -172,7 +172,7 @@ async function routes(fastify, options) {
             WHERE tg_id = '${request.params.tg_id}' RETURNING *;`);
         }
 
-        console.log(`GULP - User id: ${request.params.tg_id}, item: ${gulpItems.item}, cola: ${inventory.cola}, super_cola: ${inventory.super_cola}`);
+        console.log(`GULP - User id: ${request.params.tg_id}, item: ${gulpItems.item}, cola: ${inventory.rows[0].cola}, super_cola: ${inventory.rows[0].super_cola}`);
     
         return {...user.rows[0], ...inventory.rows[0]}
       })
