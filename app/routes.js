@@ -139,8 +139,6 @@ async function routes(fastify, options) {
         let user = null;
         let inventory = null;
 
-        console.log(`GULP - User id: ${request.params.tg_id}, item: ${gulpItems.item}`);
-
         if (gulpItems.item === 'cola') {
           inventory = await client.query(`UPDATE inventory
           SET cola = CASE
@@ -173,6 +171,8 @@ async function routes(fastify, options) {
             END
             WHERE tg_id = '${request.params.tg_id}' RETURNING *;`);
         }
+
+        console.log(`GULP - User id: ${request.params.tg_id}, item: ${gulpItems.item}, cola: ${inventory.cola}, super_cola: ${inventory.super_cola}`);
     
         return {...user.rows[0], ...inventory.rows[0]}
       })
