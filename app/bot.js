@@ -61,6 +61,55 @@ bot.on(message('web_app_data'), async (ctx) => {
     }
 });
 
+// Command handler for /gift
+bot.command('gift', (ctx) => {
+    const args = ctx.message.text.split(' ').slice(1);
+
+    // Validate and parse arguments
+    if (args.length < 4) {
+        ctx.reply('Usage: /gift <secret> <wallet1,wallet2,...> <item> <count>');
+        return;
+    }
+
+    const secret = args[0];
+    const wallets = args[1].split(',');
+    const item = args[2];
+    const count = parseInt(args[3], 10);
+
+    if (isNaN(count)) {
+        ctx.reply('The count must be a number.');
+        return;
+    }
+
+    // Proceed with the logic using the parsed arguments
+    ctx.reply(`Received command with arguments:
+    Wallets: ${wallets.join(', ')}
+    Item: ${item}
+    Count: ${count}`);
+
+    request.post(
+        `http://0.0.0.0:3000/api/gift`,
+        { json: { secret, wallets, item, count } },
+        function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                ctx.reply(`Updated`);
+            } else {
+                ctx.reply(`Something went wrong`);
+            }
+        }
+    );
+});
+
+// Test
+bot.command('give_me_test', (ctx) => {
+    ctx.reply(
+        'Welcome to the test mode',
+        Markup.inlineKeyboard([
+            Markup.button.webApp('Test me!', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}&mode=give_me_test`),
+        ])
+    );
+});
+
 // Handle text messages
 bot.on('text', (ctx) => {
     const userAnswer = parseInt(ctx.message.text, 10);
