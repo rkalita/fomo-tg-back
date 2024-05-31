@@ -102,6 +102,8 @@ bot.command('gift', (ctx) => {
 
 // Test
 bot.command('give_me_test', (ctx) => {
+    const userInfo = ctx.chat;
+    
     ctx.reply(
         'Welcome to the test mode',
         Markup.inlineKeyboard([
