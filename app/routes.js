@@ -122,6 +122,7 @@ async function routes(fastify, options) {
               );`);
             }
           }
+          console.log(`NEW_USER - User id: ${users.rows[0].tg_id}, score: ${users.rows[0].score}, energy: ${users.rows[0].energy}`);
     
           return users.rows[0];
         }
@@ -137,6 +138,8 @@ async function routes(fastify, options) {
         const gulpItems = request.body;
         let user = null;
         let inventory = null;
+
+        console.log(`GULP - User id: ${request.params.tg_id}, item: ${gulpItems.item}`);
 
         if (gulpItems.item === 'cola') {
           inventory = await client.query(`UPDATE inventory
@@ -179,6 +182,8 @@ async function routes(fastify, options) {
     fastify.patch('/api/tap/:tg_id', (req, reply) => {
       return fastify.pg.transact(async client => {
         let taps = req.body.taps;
+
+        console.log(`TAPS - User id: ${req.params.tg_id}, taps: ${taps}`);
       
         let user = await client.query(`SELECT users.score, users.energy FROM users WHERE users.tg_id='${req.params.tg_id}'`);
         let inventory = await client.query(`SELECT inventory.donut, inventory.gold_donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
