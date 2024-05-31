@@ -134,72 +134,106 @@ async function routes(fastify, options) {
     //GULP
     fastify.patch('/api/gulp/:tg_id', (request, reply) => {
       return fastify.pg.transact(async client => {
-
+        const tg_id = request.params.tg_id;
         const gulpItems = request.body;
         let user = null;
         let inventory = null;
-
+    
+        // Initial query to fetch current inventory values
+        const inventoryResult = await client.query('SELECT cola, super_cola FROM inventory WHERE tg_id = $1', [tg_id]);
+        inventory = inventoryResult.rows[0];
+    
+        console.log(`GULP INPUT - User id: ${tg_id}, item: ${gulpItems.item}, cola: ${inventory.cola}, super_cola: ${inventory.super_cola}`);
+    
         if (gulpItems.item === 'cola') {
-          inventory = await client.query(`UPDATE inventory
-          SET cola = CASE
+          inventory = await client.query(`
+            UPDATE inventory
+            SET cola = CASE
               WHEN cola - 1 < 0 THEN 0
               ELSE cola - 1
-          END
-          WHERE tg_id = '${request.params.tg_id}' RETURNING *;`);
-
-          user = await client.query(`UPDATE users
+            END
+            WHERE tg_id = $1
+            RETURNING *;`, [tg_id]);
+    
+          user = await client.query(`
+            UPDATE users
             SET energy = CASE
-                WHEN energy + 25 <= 100 THEN energy + 25
-                ELSE 100
+              WHEN energy + 25 <= 100 THEN energy + 25
+              ELSE 100
             END,
             first_day_drink = CASE
-                WHEN first_day_drink IS NULL THEN NOW()
-                WHEN first_day_drink <= NOW() - INTERVAL '24 hours' THEN NOW()
-                ELSE first_day_drink
+              WHEN first_day_drink IS NULL THEN NOW()
+              WHEN first_day_drink <= NOW() - INTERVAL '24 hours' THEN NOW()
+              ELSE first_day_drink
             END
-            WHERE tg_id = '${request.params.tg_id}' RETURNING tg_username, wallet_address, score, energy;`);
+            WHERE tg_id = $1
+            RETURNING tg_username, wallet_address, score, energy;`, [tg_id]);
+    
         } else if (gulpItems.item === 'super_cola') {
-
-          user = await client.query(`UPDATE users SET energy = 100 
-            WHERE tg_id = '${request.params.tg_id}' 
-            RETURNING tg_username, wallet_address, score, energy;`);
-
-          inventory = await client.query(`UPDATE inventory
+          user = await client.query('UPDATE users SET energy = 100 WHERE tg_id = $1 RETURNING tg_username, wallet_address, score, energy;', [tg_id]);
+    
+          inventory = await client.query(`
+            UPDATE inventory
             SET super_cola = CASE
               WHEN super_cola - 1 < 0 THEN 0
               ELSE super_cola - 1
             END
-            WHERE tg_id = '${request.params.tg_id}' RETURNING *;`);
+            WHERE tg_id = $1
+            RETURNING *;`, [tg_id]);
         }
-
-        console.log(`GULP - User id: ${request.params.tg_id}, item: ${gulpItems.item}, cola: ${inventory.rows[0].cola}, super_cola: ${inventory.rows[0].super_cola}`);
     
-        return {...user.rows[0], ...inventory.rows[0]}
-      })
+        const updatedInventory = inventory.rows[0];
+        const updatedUser = user.rows[0];
+    
+        console.log(`GULP OUTPUT - User id: ${tg_id}, item: ${gulpItems.item}, cola: ${updatedInventory.cola}, super_cola: ${updatedInventory.super_cola}`);
+    
+        return { ...updatedUser, ...updatedInventory };
+      });
     });
+    
   
     //TAP
     fastify.patch('/api/tap/:tg_id', (req, reply) => {
       return fastify.pg.transact(async client => {
-        let taps = req.body.taps;
-
-        console.log(`TAPS - User id: ${req.params.tg_id}, taps: ${taps}`);
-      
-        let user = await client.query(`SELECT users.score, users.energy FROM users WHERE users.tg_id='${req.params.tg_id}'`);
-        let inventory = await client.query(`SELECT inventory.donut, inventory.gold_donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
-
-        if (+taps > user.rows[0].energy) {
-          taps = +user.rows[0].energy;
-          reply.status(422).send(new Error('Invalid data'));
-        }
-
-        inventory = await client.query(`UPDATE inventory SET donut=donut + ${taps * 1000} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut`);
+        const tg_id = req.params.tg_id;
+        let taps = parseInt(req.body.taps, 10);
     
-        user = await client.query(`UPDATE users SET score=score + ${+taps * 1000}, energy=energy-${+taps}, last_taps_count=${taps}, updated_at = NOW() WHERE tg_id = '${req.params.tg_id}' RETURNING tg_id, tg_username, wallet_address, score, energy, referral_code`);
-
-        return {...user.rows[0], ...inventory.rows[0]}
-      })
+        console.log(`TAPS - User id: ${tg_id}, taps: ${taps}`);
+    
+        const userResult = await client.query('SELECT score, energy FROM users WHERE tg_id = $1', [tg_id]);
+        const user = userResult.rows[0];
+    
+        if (!user) {
+          reply.status(404).send(new Error('User not found'));
+          return;
+        }
+    
+        const inventoryResult = await client.query('SELECT donut, gold_donut FROM inventory WHERE tg_id = $1', [tg_id]);
+        const inventory = inventoryResult.rows[0];
+    
+        if (+taps > user.energy) {
+          taps = user.energy;
+          reply.status(422).send(new Error('Invalid data'));
+          return;
+        }
+    
+        const updatedInventoryResult = await client.query(
+          'UPDATE inventory SET donut = donut + $1 * 1000 WHERE tg_id = $2 RETURNING cola, super_cola, donut, gold_donut',
+          [taps, tg_id]
+        );
+    
+        const updatedUserResult = await client.query(
+          'UPDATE users SET score = score + $1 * 1000, energy = energy - $1, last_taps_count = $1, updated_at = NOW() WHERE tg_id = $2 RETURNING tg_id, tg_username, wallet_address, score, energy, referral_code',
+          [taps, tg_id]
+        );
+    
+        const updatedInventory = updatedInventoryResult.rows[0];
+        const updatedUser = updatedUserResult.rows[0];
+    
+        return { ...updatedUser, ...updatedInventory };
+      });
     });
+    
   
     //Golden SWAP
     fastify.patch('/api/swap/:tg_id', (req, reply) => {
@@ -322,41 +356,50 @@ async function routes(fastify, options) {
 
 
     // INITERNAL REF REWARDS CHECKER
-    fastify.get('/api/refCheck', (req, reply) => {
+    fastify.get('/api/refCheck', async (req, reply) => {
       const query = req.query;
-
+    
       if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
         return reply.status(422).send(new Error('Invalid data'));
       }
-      
-      return fastify.pg.transact(async client => {
-
-        await client.query(`WITH eligible_referrers AS (
-          SELECT refs.referral_id, COUNT(*) AS referrers_count
-          FROM refs
-          JOIN users ON refs.referrer_id = users.tg_id
-          WHERE users.score >= 100000 AND refs.rewarded IS NULL
-          GROUP BY refs.referral_id
-        )
-        UPDATE inventory
-        SET donut = donut + (25000 * eligible_referrers.referrers_count)
-        FROM eligible_referrers
-        WHERE inventory.tg_id = eligible_referrers.referral_id;`);
-
-        await client.query(`WITH eligible_referrers AS (
-          SELECT refs.referral_id
-          FROM refs
-          JOIN users ON refs.referrer_id = users.tg_id
-          WHERE users.score >= 100000 AND refs.rewarded IS NULL
-        )
-        UPDATE refs
-        SET rewarded = NOW()
-        FROM eligible_referrers
-        WHERE refs.referral_id = eligible_referrers.referral_id;`);
     
-        return true;
-      });
+      try {
+        await fastify.pg.transact(async client => {
+          await client.query(`
+            WITH eligible_referrers AS (
+              SELECT refs.referral_id, COUNT(*) AS referrers_count
+              FROM refs
+              JOIN users ON refs.referrer_id = users.tg_id
+              WHERE users.score >= 100000 AND refs.rewarded IS NULL
+              GROUP BY refs.referral_id
+            )
+            UPDATE inventory
+            SET donut = donut + (25000 * eligible_referrers.referrers_count)
+            FROM eligible_referrers
+            WHERE inventory.tg_id = eligible_referrers.referral_id;
+          `);
+    
+          await client.query(`
+            WITH eligible_referrers AS (
+              SELECT refs.referral_id
+              FROM refs
+              JOIN users ON refs.referrer_id = users.tg_id
+              WHERE users.score >= 100000 AND refs.rewarded IS NULL
+            )
+            UPDATE refs
+            SET rewarded = NOW()
+            FROM eligible_referrers
+            WHERE refs.referral_id = eligible_referrers.referral_id;
+          `);
+        });
+    
+        reply.send({ success: true });
+      } catch (error) {
+        console.error('Transaction failed', error);
+        reply.status(500).send(new Error('Internal Server Error'));
+      }
     });
+    
 
     // INIT TABLE. Launch just once to create the table
     fastify.get('/api/updateDB', (req, reply) => {
