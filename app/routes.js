@@ -61,38 +61,85 @@ async function routes(fastify, options) {
     })
   
     //GET ONE USER
-    fastify.get('/api/users/:id', (req, reply) => {
-      return fastify.pg.transact(async client => {
-
-        let user = await client.query(`SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, users.first_day_drink, users.referral_code, inventory.cola, inventory.super_cola, inventory.donut, inventory.gold_donut from users INNER JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.tg_id = '${req.params.id}'`);
-        const position = await client.query(`WITH ranked_table AS (SELECT *, ROW_NUMBER() OVER (ORDER BY score DESC, users.tg_username) AS row_num FROM "users") SELECT row_num FROM ranked_table WHERE "tg_id" = '${req.params.id}';`);
-        const invited = await client.query(`SELECT COUNT(*) AS count FROM refs WHERE referral_id='${req.params.id}'`)
-
-        if (user.rows[0].cola < 4 && user.rows[0].first_day_drink) {
-          // Define differrence between now and first drink cola in day
-          const firstDayDrinkDateTime = new Date(user.rows[0].first_day_drink);
-          const currentDate = new Date();
-          const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60 * 60);
-
-          if (timeDifferenceHours >= 6) {
-            const recoveredBottlesCount = Math.floor(timeDifferenceHours / 6);
-
-            const inventory = await client.query(`UPDATE inventory
-              SET cola = CASE
-                WHEN cola + ${recoveredBottlesCount} <= 4 THEN cola + ${recoveredBottlesCount}
-                ELSE 4
-              END
-              WHERE tg_id = '${req.params.id}' RETURNING *;`);
-            
-              await client.query(`UPDATE users SET first_day_drink = first_day_drink + INTERVAL '6 hours' WHERE tg_id = '${req.params.id}';`);
-
-            user.rows[0].cola = inventory.rows[0].cola;
-          }
-        }
+    fastify.get('/api/users/:id', async (req, reply) => {
+      try {
+        const userId = req.params.id;
+        const client = await fastify.pg.connect();
     
-        return {...user.rows[0], rate: +position.rows[0].row_num, invited: +invited.rows[0].count};
-      })
+        try {
+          const userResult = await client.query(
+            `SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, 
+                    users.first_day_drink, users.referral_code, inventory.cola, inventory.super_cola, 
+                    inventory.donut, inventory.gold_donut 
+             FROM users 
+             INNER JOIN inventory ON users.tg_id = inventory.tg_id 
+             WHERE users.tg_id = $1`,
+            [userId]
+          );
+          let user = userResult.rows[0];
+    
+          const positionResult = await client.query(
+            `WITH ranked_table AS (
+               SELECT *, ROW_NUMBER() OVER (ORDER BY score DESC, users.tg_username) AS row_num 
+               FROM users
+             ) 
+             SELECT row_num 
+             FROM ranked_table 
+             WHERE tg_id = $1`,
+            [userId]
+          );
+          const position = positionResult.rows[0];
+    
+          const invitedResult = await client.query(
+            `SELECT COUNT(*) AS count 
+             FROM refs 
+             WHERE referral_id = $1`,
+            [userId]
+          );
+          const invited = invitedResult.rows[0];
+    
+          if (user.cola < 4 && user.first_day_drink) {
+            const firstDayDrinkDateTime = new Date(user.first_day_drink);
+            const currentDate = new Date();
+            const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60 * 60);
+    
+            if (timeDifferenceHours >= 6) {
+              const recoveredBottlesCount = Math.floor(timeDifferenceHours / 6);
+              const inventoryResult = await client.query(
+                `UPDATE inventory
+                 SET cola = CASE
+                   WHEN cola + $1 <= 4 THEN cola + $1
+                   ELSE 4
+                 END
+                 WHERE tg_id = $2 
+                 RETURNING cola`,
+                [recoveredBottlesCount, userId]
+              );
+    
+              await client.query(
+                `UPDATE users 
+                 SET first_day_drink = first_day_drink + INTERVAL '6 hours' * $1 
+                 WHERE tg_id = $2`,
+                [recoveredBottlesCount, userId]
+              );
+    
+              user.cola = inventoryResult.rows[0].cola;
+            }
+          }
+    
+          client.release();
+          reply.send({ ...user, rate: +position.row_num, invited: +invited.count });
+        } catch (err) {
+          client.release();
+          console.error('Database query error:', err);
+          reply.status(500).send(new Error('Internal Server Error'));
+        }
+      } catch (err) {
+        console.error('Connection error:', err);
+        reply.status(500).send(new Error('Internal Server Error'));
+      }
     });
+    
   
     //Create user
     fastify.post('/api/users', (request, reply) => {
