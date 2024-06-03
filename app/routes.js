@@ -245,8 +245,6 @@ async function routes(fastify, options) {
         const tg_id = req.params.tg_id;
         let taps = parseInt(req.body.taps, 10);
     
-        console.log(`TAPS - User id: ${tg_id}, taps: ${taps}`);
-    
         const userResult = await client.query('SELECT score, energy FROM users WHERE tg_id = $1', [tg_id]);
         const user = userResult.rows[0];
     
@@ -257,6 +255,8 @@ async function routes(fastify, options) {
     
         const inventoryResult = await client.query('SELECT donut, gold_donut FROM inventory WHERE tg_id = $1', [tg_id]);
         const inventory = inventoryResult.rows[0];
+    
+        console.log(`TAPS - User id: ${tg_id}, taps: ${taps}, energy: ${inventory?.energy}`);
     
         if (+taps > user.energy) {
           taps = user.energy;
