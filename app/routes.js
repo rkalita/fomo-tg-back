@@ -352,7 +352,7 @@ async function routes(fastify, options) {
 
       lootboxCount = Math.floor(+donuts / 3);
 
-      const inventoryUpdate = await client.query(`UPDATE inventory SET lootbox= lootbox + ${lootboxCount}, donut= gold_donut - ${lootboxCount * 3} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut, lootbox`);
+      const inventoryUpdate = await client.query(`UPDATE inventory SET lootbox= lootbox + ${lootboxCount}, gold_donut= gold_donut - ${lootboxCount * 3} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut, lootbox`);
 
       return inventoryUpdate.rows[0];
     })
