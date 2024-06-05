@@ -49,7 +49,7 @@ async function routes(fastify, options) {
     return fastify.pg.transact(async client => {
 
       await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, referral_code VARCHAR(20) UNIQUE, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ, last_taps_count integer NOT NULL DEFAULT 0, captcha_rewarded_at TIMESTAMPTZ);');
-      await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0);');
+      await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0, "nft" integer NOT NULL DEFAULT 0, "apt" integer NOT NULL DEFAULT 0, "fomo" bigint NOT NULL DEFAULT 0);');
       await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
       await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
 
@@ -337,6 +337,25 @@ async function routes(fastify, options) {
 
       return inventoryUpdate.rows[0];
     })
+  });    
+
+  //Lucky SWAP
+  fastify.patch('/api/lucky-swap/:tg_id', (req, reply) => {
+    return fastify.pg.transact(async client => {
+      let lootboxCount = 0;
+      const donuts = req.body.donuts;
+      const inventory = await client.query(`SELECT inventory.gold_donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
+
+      if (donuts > inventory.rows[0].gold_donut) {
+        return reply.status(422).send(new Error('Invalid data'));
+      }
+
+      lootboxCount = Math.floor(+donuts / 3);
+
+      const inventoryUpdate = await client.query(`UPDATE inventory SET lootbox= lootbox + ${lootboxCount}, donut= gold_donut - ${lootboxCount * 3} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut, lootbox`);
+
+      return inventoryUpdate.rows[0];
+    })
   });
 
   //CAPTCHA
@@ -545,7 +564,9 @@ async function routes(fastify, options) {
     }
     
     return fastify.pg.transact(async client => {
-      await client.query('ALTER TABLE inventory ADD lootbox integer NOT NULL DEFAULT 0');
+      await client.query('ALTER TABLE inventory ADD nft integer NOT NULL DEFAULT 0');
+      await client.query('ALTER TABLE inventory ADD apt integer NOT NULL DEFAULT 0');
+      await client.query('ALTER TABLE inventory ADD fomo integer NOT NULL DEFAULT 0');
     });
   });
 
