@@ -304,7 +304,7 @@ async function routes(fastify, options) {
       }
   
       const updatedInventoryResult = await client.query(
-        'UPDATE inventory SET donut = donut + $1 * 1000 WHERE tg_id = $2 RETURNING cola, super_cola, donut, gold_donut',
+        'UPDATE inventory SET donut = donut + $1 * 1000 WHERE tg_id = $2 RETURNING *',
         [taps, tg_id]
       );
   
@@ -397,7 +397,7 @@ async function routes(fastify, options) {
       let totalAmount = 0;
       for (const transaction of transactions) {
         if (transaction.amount % 1000000 === 0 && transaction.amount / 1000000 > 0) {
-          goldenDonutsCount = (transaction.amount / 1000000) * 5;
+          goldenDonutsCount = (transaction.amount / 1000000) * 6;
 
           await client.query(
             `INSERT INTO transactions (wallet_address, date, amount) VALUES($1, $2, $3) ON CONFLICT DO NOTHING;`,
