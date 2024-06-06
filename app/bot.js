@@ -76,7 +76,9 @@ bot.command('buy', (ctx) => {
     🪙How To Buy $FOMO:🪙
     1) Go to https://baptswap.com/#/swap
     2) Select APT/ APTOS FOMO pair 
-    3) Buy amount you want`);
+    3) Buy amount you want
+    
+    <i>p.s. Baptswap charging fees from transactions [0.6%]</i>`);
 });
 
 // Command handler for /gift
