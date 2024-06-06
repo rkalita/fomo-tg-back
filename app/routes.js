@@ -52,7 +52,8 @@ async function routes(fastify, options) {
       await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0, "nft" integer NOT NULL DEFAULT 0, "apt" DECIMAL(10, 2) NOT NULL DEFAULT 0, "fomo" bigint NOT NULL DEFAULT 0);');
       await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
       await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
-      await client.query('CREATE TABLE lootboxes (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250));');
+      await client.query('CREATE TABLE IF NOT EXISTS lootboxes (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250));');
+      await client.query('CREATE TABLE IF NOT EXISTS nfts (id SERIAL PRIMARY KEY, title varchar(250));');
 
       //INDEXES
       await client.query('CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users (tg_id);');
@@ -518,9 +519,13 @@ async function routes(fastify, options) {
               const updateInventoryResult = await client.query(`UPDATE inventory SET ${item} = ${item} + $1, lootbox=lootbox - 1 WHERE tg_id=$2 RETURNING *`, [item !== 'nft' ? +count : 1, userId]);
               const updateInventory = updateInventoryResult?.rows[0] || null;
 
+              if (item === 'nft') {
+                nft = await client.query('SELECT nfts FROM inventory WHERE id = $1', [unpackRandomLootbox.nft]);
+              }
+
               console.log(`User ${userId} opened the lootbox: ${{lootbox: {item, value: item !== 'nft' ? count : 1}}}`);
 
-              reply.send({ ...updateInventory, loot: {item, value: +count}});
+              reply.send({ ...updateInventory, loot: {item, value: +count, nft: nft || null}});
               return;
             }
 
@@ -643,13 +648,32 @@ async function routes(fastify, options) {
     }
     
     return fastify.pg.transact(async client => {
-      await client.query('ALTER TABLE inventory DROP COLUMN fomo');
-      await client.query('ALTER TABLE inventory DROP COLUMN apt');
-      await client.query('ALTER TABLE inventory DROP COLUMN nft');
-      await client.query('ALTER TABLE inventory add fomo BIGINT NOT NULL DEFAULT 0');
-      await client.query('ALTER TABLE inventory add apt DECIMAL(10, 2) NOT NULL DEFAULT 0');
-      await client.query('ALTER TABLE inventory add nft integer NOT NULL DEFAULT 0');
-      await client.query('ALTER TABLE lootboxes add donut BIGINT');
+      await client.query('CREATE TABLE IF NOT EXISTS nfts (id SERIAL PRIMARY KEY, title varchar(250))');
+      await client.query(`INSERT into nfts (title) VALUES('Creatus NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Creatus NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
+      await client.query(`INSERT into nfts (title) VALUES('Chomble NFT')`);
     });
   });
 
