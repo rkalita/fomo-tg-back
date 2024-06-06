@@ -2,7 +2,7 @@ async function routes(fastify, options) {
   const { Aptos, AptosConfig, Network } = require('@aptos-labs/ts-sdk');
   const aptosConfig = new AptosConfig({ network: Network.MAINNET });
   const aptos = new Aptos(aptosConfig);
-  const destWalletAddress = '0x431a8386faf7017f9805afa072bb9c9ad381b6470bebded8b3a2ac8c0afd12da';
+  const destWalletAddress = '0xfcce85165d659e08fc697c9d3db6618005c9dc0c74eeaa1a6e2eeaf95a1226c0'; //Fomo-donut.apt
 
   const getTransatcions = async (walletAddress, existedTransactions) => {
     try {
@@ -49,9 +49,10 @@ async function routes(fastify, options) {
     return fastify.pg.transact(async client => {
 
       await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, referral_code VARCHAR(20) UNIQUE, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ, last_taps_count integer NOT NULL DEFAULT 0, captcha_rewarded_at TIMESTAMPTZ);');
-      await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0, "nft" integer NOT NULL DEFAULT 0, "apt" integer NOT NULL DEFAULT 0, "fomo" bigint NOT NULL DEFAULT 0);');
+      await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0, "nft" integer NOT NULL DEFAULT 0, "apt" DECIMAL(10, 2) NOT NULL DEFAULT 0, "fomo" bigint NOT NULL DEFAULT 0);');
       await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
       await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
+      await client.query('CREATE TABLE lootboxes (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250));');
 
       //INDEXES
       await client.query('CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users (tg_id);');
@@ -459,7 +460,78 @@ async function routes(fastify, options) {
       reply.status(500).send({ error: 'Internal Server Error' });
     }
   });
-  
+
+  //OPEN LOOTBOX
+  fastify.get('/api/open-lootbox/:id', async (req, reply) => {
+    try {
+        const userId = req.params.id;
+        const client = await fastify.pg.connect();
+
+        try {
+            const lootboxesDB = await client.query('SELECT lootbox FROM inventory WHERE tg_id = $1', [userId]);
+
+            if (!lootboxesDB?.rows[0]?.lootbox) {
+                reply.status(404).send({ error: "You have no lootboxes" });
+                return;
+            }
+
+            const randomFreeLootboxResult = await client.query(`
+                SELECT id
+                FROM lootboxes
+                WHERE tg_id IS NULL
+                ORDER BY RANDOM()
+                LIMIT 1
+            `);
+            const randomFreeLootbox = randomFreeLootboxResult?.rows[0] || null;
+
+            if (!randomFreeLootbox) {
+                reply.status(404).send({ error: "No valid lootboxes" });
+                return;
+            }
+
+            const unpackRandomLootboxResult = await client.query(`
+                UPDATE lootboxes SET tg_id = $1
+                WHERE id = $2
+                RETURNING *
+            `, [userId, randomFreeLootbox.id]);
+
+            const unpackRandomLootbox = unpackRandomLootboxResult?.rows[0] || null;
+            let item;
+            let count;
+
+            Object.entries(unpackRandomLootbox).forEach(([key, value]) => {
+                if (value !== null && !['id','tg_id'].includes(key)) {
+                    item = key;
+                    count = value;
+                }
+            });
+
+            if (!!count) {
+              // Using parameterized queries to prevent SQL injection
+              const updateInventoryResult = await client.query(`UPDATE inventory SET ${item} = ${item} + $1, lootbox=lootbox - 1 WHERE tg_id=$2 RETURNING *`, [item !== 'nft' ? +count : 1, userId]);
+              const updateInventory = updateInventoryResult?.rows[0] || null;
+
+              console.log(`User ${userId} opened the lootbox: ${{lootbox: {item, value: item !== 'nft' ? count : 1}}}`);
+
+              reply.send({ ...updateInventory, loot: {item, value: +count}});
+              return;
+            }
+
+            await client.query(`UPDATE inventory SET lootbox=lootbox - 1 WHERE tg_id=$1 RETURNING *`, [userId]);
+            console.log(`User ${userId} opened the lootbox: Empty`);
+
+            reply.send(false);
+        } catch (err) {
+            console.error('Database query error:', err);
+            reply.status(500).send({ error: 'Internal Server Error' });
+        } finally {
+            client.release();
+        }
+    } catch (err) {
+        console.error('Connection error:', err);
+        reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });  
 
   // -------------------------------------- CRON routes start ---------------------------------------------
   
@@ -564,132 +636,127 @@ async function routes(fastify, options) {
     }
     
     return fastify.pg.transact(async client => {
-      await client.query('ALTER TABLE inventory ADD nft integer NOT NULL DEFAULT 0');
-      await client.query('ALTER TABLE inventory ADD apt integer NOT NULL DEFAULT 0');
-      await client.query('ALTER TABLE inventory ADD fomo integer NOT NULL DEFAULT 0');
+      await client.query('ALTER TABLE inventory DROP COLUMN fomo');
+      await client.query('ALTER TABLE inventory DROP COLUMN apt');
+      await client.query('ALTER TABLE inventory DROP COLUMN nft');
+      await client.query('ALTER TABLE inventory add fomo BIGINT NOT NULL DEFAULT 0');
+      await client.query('ALTER TABLE inventory add apt DECIMAL(10, 2) NOT NULL DEFAULT 0');
+      await client.query('ALTER TABLE inventory add nft integer NOT NULL DEFAULT 0');
+      await client.query('ALTER TABLE lootboxes add donut BIGINT');
     });
   });
 
   // LOOTBOXES
-  // fastify.get('/api/lootboxes', (req, reply) => {
-  //   return fastify.pg.transact(async client => {
-  //     const query = req.query;
+  fastify.get('/api/lootboxes', (req, reply) => {
+    return fastify.pg.transact(async client => {
+      const query = req.query;
   
-  //     if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
-  //       return reply.status(422).send(new Error('Invalid data'));
-  //     }
+      if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
+        return reply.status(422).send(new Error('Invalid data'));
+      }
 
-  //     // Define the loot items with exact counts
-  //     const lootCounts = [
-  //       { apt: 0.1, fomo: null, nft: null, gold_donut: null, yellow_cola: null, super_cola: null, count: 200 },
-  //       { apt: null, fomo: 100000, nft: null, gold_donut: null, yellow_cola: null, super_cola: null, count: 200 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: 1, yellow_cola: null, super_cola: null, count: 400 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: 2, yellow_cola: null, super_cola: null, count: 200 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: 3, yellow_cola: null, super_cola: null, count: 100 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: null, yellow_cola: 1, super_cola: null, count: 500 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: null, yellow_cola: 2, super_cola: null, count: 200 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: null, yellow_cola: 3, super_cola: null, count: 100 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: null, yellow_cola: null, super_cola: 1, count: 400 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: null, yellow_cola: null, super_cola: 2, count: 200 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: null, yellow_cola: null, super_cola: 3, count: 100 },
-  //       { apt: null, fomo: null, nft: null, gold_donut: null, yellow_cola: null, super_cola: null, count: 1500 }, // Empty Box
-  //       { apt: 1, fomo: null, nft: null, gold_donut: null, yellow_cola: null, super_cola: null, count: 10 },
-  //       { apt: 10, fomo: null, nft: null, gold_donut: null, yellow_cola: null, super_cola: null, count: 1 },
-  //       { apt: null, fomo: 50000, nft: null, gold_donut: null, yellow_cola: null, super_cola: null, count: 500 },
-  //       { apt: null, fomo: 75000, nft: null, gold_donut: null, yellow_cola: null, super_cola: null, count: 200 },
-  //       { apt: null, fomo: 150000, nft: null, gold_donut: null, yellow_cola: null, super_cola: null, count: 100 },
-  //       { apt: null, fomo: 300000, nft: null, gold_donut: null, yellow_cola: null, super_cola: null, count: 64 },
-  //       { apt: null, fomo: null, nft: 'NFT', gold_donut: null, yellow_cola: null, super_cola: null, count: 25 },
-  //     ];
+      // Define the loot items with exact counts
+      const lootCounts = [
+        { apt: 0.1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, count: 200 },
+        { apt: null, fomo: 100000, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, count: 200 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, count: 400 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: 2, yellow_cola: null, super_cola: null, count: 200 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, count: 100 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, count: 500 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 2, super_cola: null, count: 200 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 3, super_cola: null, count: 100 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, count: 400 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 2, count: 200 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 3, count: 100 },
+        { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, count: 1500 }, // Empty Box
+        { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, count: 10 },
+        { apt: 10, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, count: 1 },
+        { apt: null, fomo: null, nft: null, donut:50000, gold_donut: null, yellow_cola: null, super_cola: null, count: 500 },
+        { apt: null, fomo: null, nft: null, donut:75000, gold_donut: null, yellow_cola: null, super_cola: null, count: 200 },
+        { apt: null, fomo: null, nft: null, donut:150000, gold_donut: null, yellow_cola: null, super_cola: null, count: 100 },
+        { apt: null, fomo: null, nft: null, donut:300000, gold_donut: null, yellow_cola: null, super_cola: null, count: 64 },
+        { apt: null, fomo: null, nft: 'NFT', donut:null, gold_donut: null, yellow_cola: null, super_cola: null, count: 25 },
+      ];
 
-  //     // Create NFT IDs
-  //     const nftIDs = Array.from({ length: 25 }, (_, i) => i + 1);
+      // Create NFT IDs
+      const nftIDs = Array.from({ length: 25 }, (_, i) => i + 1);
   
-  //     // Function to shuffle an array
-  //     function shuffle(array) {
-  //       for (let i = array.length - 1; i > 0; i--) {
-  //         const j = Math.floor(Math.random() * (i + 1));
-  //         [array[i], array[j]] = [array[j], array[i]];
-  //       }
-  //       return array;
-  //     }
+      // Function to shuffle an array
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
 
-  //     async function generateAndInsertLootboxes() {
-  //       const lootboxes = [];
+      async function generateAndInsertLootboxes() {
+        const lootboxes = [];
       
-  //       // Generate rows for each loot item
-  //       lootCounts.forEach(item => {
-  //         for (let i = 0; i < item.count; i++) {
-  //           const lootbox = {
-  //             apt: item.apt,
-  //             fomo: item.fomo,
-  //             nft: null,
-  //             gold_donut: item.gold_donut,
-  //             yellow_cola: item.yellow_cola,
-  //             super_cola: item.super_cola,
-  //           };
+        // Generate rows for each loot item
+        lootCounts.forEach(item => {
+          for (let i = 0; i < item.count; i++) {
+            const lootbox = {
+              apt: item.apt,
+              fomo: item.fomo,
+              nft: null,
+              gold_donut: item.gold_donut,
+              donut: item.donut,
+              yellow_cola: item.yellow_cola,
+              super_cola: item.super_cola,
+            };
       
-  //           // Assign NFT IDs if applicable
-  //           if (item.nft === 'NFT') {
-  //             if (nftIDs.length > 0) {
-  //               lootbox.nft = nftIDs.pop();
-  //             } else {
-  //               continue; // Skip if no NFT IDs are left
-  //             }
-  //           }
+            // Assign NFT IDs if applicable
+            if (item.nft === 'NFT') {
+              if (nftIDs.length > 0) {
+                lootbox.nft = nftIDs.pop();
+              } else {
+                continue; // Skip if no NFT IDs are left
+              }
+            }
       
-  //           lootboxes.push(lootbox);
-  //         }
-  //       });
+            lootboxes.push(lootbox);
+          }
+        });
       
-  //       // Shuffle the lootboxes array
-  //       shuffle(lootboxes);
+        // Shuffle the lootboxes array
+        shuffle(lootboxes);
       
-  //       try {
-  //         await client.query('BEGIN');
+        try {
+          await client.query('BEGIN');
       
-  //         for (const lootbox of lootboxes) {
-  //           const query = `
-  //             INSERT INTO lootboxes (apt, fomo, nft, gold_donut, yellow_cola, super_cola)
-  //             VALUES ($1, $2, $3, $4, $5, $6)
-  //           `;
+          for (const lootbox of lootboxes) {
+            const query = `
+              INSERT INTO lootboxes (apt, fomo, nft, gold_donut, yellow_cola, super_cola, donut)
+              VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `;
       
-  //           const values = [
-  //             lootbox.apt || null,
-  //             lootbox.fomo || null,
-  //             lootbox.nft || null,
-  //             lootbox.gold_donut || null,
-  //             lootbox.yellow_cola || null,
-  //             lootbox.super_cola || null,
-  //           ];
+            const values = [
+              lootbox.apt || null,
+              lootbox.fomo || null,
+              lootbox.nft || null,
+              lootbox.gold_donut || null,
+              lootbox.yellow_cola || null,
+              lootbox.super_cola || null,
+              lootbox.donut || null,
+            ];
       
-  //           await client.query(query, values);
-  //         }
+            await client.query(query, values);
+          }
       
-  //         await client.query('COMMIT');
-  //         console.log('Lootboxes generated and inserted successfully');
-  //       } catch (err) {
-  //         await client.query('ROLLBACK');
-  //         console.error('Error generating or inserting lootboxes:', err);
-  //       } finally {
-  //         await client.end();
-  //       }
-  //     }
+          await client.query('COMMIT');
+          console.log('Lootboxes generated and inserted successfully');
+        } catch (err) {
+          await client.query('ROLLBACK');
+          console.error('Error generating or inserting lootboxes:', err);
+        } finally {
+          await client.end();
+        }
+      }
       
-  //     generateAndInsertLootboxes();
-  //   });
-
-  //   // const query = req.query;
-
-  //   // if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
-  //   //   return reply.status(422).send(new Error('Invalid data'));
-  //   // }
-    
-  //   // return fastify.pg.transact(async client => {
-  //   //   await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
-  //   //   await client.query('ALTER TABLE inventory ADD yellow_cola integer NOT NULL DEFAULT 0');
-  //   // });
-  // });
+      generateAndInsertLootboxes();
+    });
+  });
   // -------------------------------------- MIGRATIONS routes end ---------------------------------------------
 }
   
