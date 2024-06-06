@@ -61,6 +61,21 @@ bot.on(message('web_app_data'), async (ctx) => {
     }
 });
 
+bot.command('buy', (ctx) => {
+    ctx.replyWithHTML(`⚡️How To Buy GOLD DONUTS with $FOMO⚡️\n
+    1) Send min. 1.000.000 (1m) $FOMO to fomo-donut.apt\n
+    2) Launch game. Go to "Explore" and click on "Claim Donuts"\n
+    3) Done\n\n
+    
+    ⚠️IMPORTANT⚠️\n
+    Minimum amount to send is 1million $FOMO (6 gold donuts) . You can send any amount with round numbers. For example 1..2...3...4...5... millions fomo. In case if you sent not round amount (ex. 999.999 , 1.500.000...) = funds will be refunded.\n\n
+    
+    🪙How To Buy $FOMO:🪙\n
+    1) Go to https://baptswap.com/#/swap\n
+    2) Select APT/ APTOS FOMO pair \n
+    3) Buy amount you want`);
+});
+
 // Command handler for /gift
 bot.command('gift', (ctx) => {
     const args = ctx.message.text.split(' ').slice(1);
