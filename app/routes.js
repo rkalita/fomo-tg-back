@@ -468,6 +468,13 @@ async function routes(fastify, options) {
         const client = await fastify.pg.connect();
 
         try {
+            const userData = await client.query('SELECT wallet_address FROM inventory WHERE tg_id = $1', [userId]);
+
+            if (!userData?.rows[0]?.wallet_address) {
+                reply.status(404).send({ error: "No walets found" });
+                return;
+            }
+
             const lootboxesDB = await client.query('SELECT lootbox FROM inventory WHERE tg_id = $1', [userId]);
 
             if (!lootboxesDB?.rows[0]?.lootbox) {
