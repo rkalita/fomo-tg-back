@@ -63,7 +63,7 @@ bot.on(message('web_app_data'), async (ctx) => {
 
 bot.command('buy', (ctx) => {
     ctx.replyWithHTML(`
-    ⚡️How To Buy <b><span style="color:black">GOLD DONUTS</span></b> with $FOMO⚡️
+    ⚡️How To Buy <b>GOLD DONUTS</b> with $FOMO⚡️
     1) Send min. 1.000.000 (1m) $FOMO to fomo-donut.apt
     2) Launch game. Go to "Explore" and click on "Claim Donuts"
     3) Done
