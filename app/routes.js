@@ -506,6 +506,7 @@ async function routes(fastify, options) {
             const unpackRandomLootbox = unpackRandomLootboxResult?.rows[0] || null;
             let item;
             let count;
+            let nft;
 
             Object.entries(unpackRandomLootbox).forEach(([key, value]) => {
                 if (value !== null && !['id','tg_id'].includes(key)) {
