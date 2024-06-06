@@ -2,7 +2,7 @@ async function routes(fastify, options) {
   const { Aptos, AptosConfig, Network } = require('@aptos-labs/ts-sdk');
   const aptosConfig = new AptosConfig({ network: Network.MAINNET });
   const aptos = new Aptos(aptosConfig);
-  const destWalletAddress = '0xfcce85165d659e08fc697c9d3db6618005c9dc0c74eeaa1a6e2eeaf95a1226c0'; //Fomo-donut.apt
+  const destWalletAddress = '0xf141d0e3815513d23fb0a25a891e61fcf49bde39254c22cd472d3b7c920840ca'; //Fomo-donut.apt
 
   const getTransatcions = async (walletAddress, existedTransactions) => {
     try {
