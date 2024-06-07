@@ -74,7 +74,7 @@ async function routes(fastify, options) {
       if (err) return reply.send(err)
   
       client.query(
-        'SELECT users.tg_username, users.score from users ORDER BY users.score DESC, users.tg_username LIMIT 100',
+        'SELECT users.tg_id, users.tg_username, users.score from users ORDER BY users.score DESC, users.tg_username LIMIT 100',
         function onResult (err, result) {
           
           release()

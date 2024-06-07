@@ -138,7 +138,7 @@ bot.command('mass_mail', (ctx) => {
             
             if (!error && response.statusCode === 200) {
                 const users = JSON.parse(body); // Parse the response body as JSON
-                ctx.reply(body);
+                ctx.reply(body[0].tg_id);
                 // users.forEach((data, index) => { // Add index as a second parameter
                 //     setTimeout(() => {
                 //         sendMessageToChat(data?.tg_id, `
