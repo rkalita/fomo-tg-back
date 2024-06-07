@@ -142,7 +142,7 @@ bot.command('gift', (ctx) => {
 // Test
 bot.command('mass_mail', (ctx) => {
     request.get(
-        `http://0.0.0.0:3000/api/users`,
+        `http://0.0.0.0:3000/api/users?unlimit=true`,
         function (error, response, body) {
             const delay = 1000 / 30;
             
