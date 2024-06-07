@@ -21,6 +21,15 @@ function generateCaptcha() {
     return { question, answer };
 }
 
+async function sendMessageToChat(chatId, message) {
+    try {
+        await bot.telegram.sendMessage(chatId, message, { parse_mode: 'HTML' });
+        console.log(`Message sent successfully to chat ID: ${chatId}`);
+    } catch (error) {
+        console.error(`Error sending message to chat ID ${chatId}:`, error);
+    }
+}
+
 bot.start((ctx) => {
     const { question, answer } = generateCaptcha();
     
@@ -113,6 +122,32 @@ bot.command('gift', (ctx) => {
         function (error, response, body) {
             if (!error && response.statusCode == 200) {
                 ctx.reply(`Updated`);
+            } else {
+                ctx.reply(`Something went wrong`);
+            }
+        }
+    );
+});
+
+// Test
+bot.command('mass_mail', (ctx) => {
+    request.get(
+        `http://0.0.0.0:3000/api/users`,
+        function (error, response, body) {
+            const delay = 1000 / 30;
+            
+            if (!error && response.statusCode === 200) {
+                const users = JSON.parse(body); // Parse the response body as JSON
+                ctx.reply(body);
+                // users.forEach((data, index) => { // Add index as a second parameter
+                //     setTimeout(() => {
+                //         sendMessageToChat(data?.tg_id, `
+                //             ⭐️Out of Golden Donuts? Wanna buy some more? ⭐️
+
+                //             Now it's possible! Type /buy and get easy instructions on how to do it in a few mins!
+                //         `);
+                //     }, index * delay);
+                // });
             } else {
                 ctx.reply(`Something went wrong`);
             }
