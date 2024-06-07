@@ -142,7 +142,7 @@ bot.command('mass_mail', (ctx) => {
                 sendMessageToChat('274490662', `
                             ⭐️Out of Golden Donuts? Wanna buy some more? ⭐️
 
-                            Now it's possible! Type /buy and get easy instructions on how to do it in a few mins!
+Now it's possible! Type <code>/buy</code> and get easy instructions on how to do it in a few mins!
                         `);
                 // users.forEach((data, index) => { // Add index as a second parameter
                 //     setTimeout(() => {
