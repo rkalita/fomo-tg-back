@@ -90,6 +90,16 @@ bot.command('buy', (ctx) => {
     <i>p.s. Baptswap charging fees from transactions [0.6%]</i>`);
 });
 
+bot.command('faq', (ctx) => {
+    ctx.replyWithHTML(`
+        F.A.Q About our game [EN]
+    https://telegra.ph/Fomo-Tap-App-FAQ-06-02#How%20to%20play
+
+    Часто задаваемые вопросы о нашей игре [RU]
+    https://telegra.ph/Fomo-Tap-App-FAQ-RU-06-03`
+    );
+});
+
 // Command handler for /gift
 bot.command('gift', (ctx) => {
     const args = ctx.message.text.split(' ').slice(1);
