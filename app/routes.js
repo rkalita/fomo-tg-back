@@ -253,10 +253,10 @@ async function routes(fastify, options) {
           END
           WHERE tg_id = $1
           RETURNING *;`, [tg_id]);
-      } else if (gulpItems.item === 'yellow_cola1') {
+      } else if (gulpItems.item === 'yellow_cola') {
         inventory = await client.query(`
           UPDATE inventory
-          SET super_cola = CASE
+          SET yellow_cola = CASE
             WHEN yellow_cola - 1 < 0 THEN 0
             ELSE yellow_cola - 1
           END
