@@ -154,6 +154,9 @@ bot.command('mass_mail', (ctx) => {
                             ⭐️Out of Golden Donuts? Wanna buy some more? ⭐️
 
 Now it's possible! Type /buy and get easy instructions on how to do it in a few mins!
+
+⭐️Newcomer? Don't worry! Here is our FAQ ⭐️
+Type /faq and get step by step manual!
                         `);
                     }, index * delay);
                 });
