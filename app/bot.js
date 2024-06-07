@@ -138,21 +138,15 @@ bot.command('mass_mail', (ctx) => {
             
             if (!error && response.statusCode === 200) {
                 const users = JSON.parse(body); // Parse the response body as JSON
-                // ctx.reply(users[0].tg_id);
-                sendMessageToChat('274490662', `
+                users.forEach((user, index) => { // Add index as a second parameter
+                    setTimeout(() => {
+                        sendMessageToChat(user.tg_id, `
                             ⭐️Out of Golden Donuts? Wanna buy some more? ⭐️
 
-Now it's possible! Type <code>/buy</code> and get easy instructions on how to do it in a few mins!
+Now it's possible! Type /buy and get easy instructions on how to do it in a few mins!
                         `);
-                // users.forEach((data, index) => { // Add index as a second parameter
-                //     setTimeout(() => {
-                //         sendMessageToChat(data?.tg_id, `
-                //             ⭐️Out of Golden Donuts? Wanna buy some more? ⭐️
-
-                //             Now it's possible! Type /buy and get easy instructions on how to do it in a few mins!
-                //         `);
-                //     }, index * delay);
-                // });
+                    }, index * delay);
+                });
             } else {
                 ctx.reply(`Something went wrong`);
             }
