@@ -93,10 +93,10 @@ bot.command('buy', (ctx) => {
 bot.command('faq', (ctx) => {
     ctx.replyWithHTML(`
         F.A.Q About our game [EN]
-    https://telegra.ph/Fomo-Tap-App-FAQ-06-02#How%20to%20play
+https://telegra.ph/Fomo-Tap-App-FAQ-06-02#How%20to%20play
 
-    Часто задаваемые вопросы о нашей игре [RU]
-    https://telegra.ph/Fomo-Tap-App-FAQ-RU-06-03`
+Часто задаваемые вопросы о нашей игре [RU]
+https://telegra.ph/Fomo-Tap-App-FAQ-RU-06-03`
     );
 });
 
