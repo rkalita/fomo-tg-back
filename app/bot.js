@@ -141,30 +141,30 @@ bot.command('gift', (ctx) => {
 
 // Test
 bot.command('mass_mail', (ctx) => {
-    request.get(
-        `http://0.0.0.0:3000/api/users?unlimit=true`,
-        function (error, response, body) {
-            const delay = 1000 / 30;
+//     request.get(
+//         `http://0.0.0.0:3000/api/users?unlimit=true`,
+//         function (error, response, body) {
+//             const delay = 1000 / 30;
             
-            if (!error && response.statusCode === 200) {
-                const users = JSON.parse(body); // Parse the response body as JSON
-                users.forEach((user, index) => { // Add index as a second parameter
-                    setTimeout(() => {
-                        sendMessageToChat(user.tg_id, `
-                            ⭐️Out of Golden Donuts? Wanna buy some more? ⭐️
+//             if (!error && response.statusCode === 200) {
+//                 const users = JSON.parse(body); // Parse the response body as JSON
+//                 users.forEach((user, index) => { // Add index as a second parameter
+//                     setTimeout(() => {
+//                         sendMessageToChat(user.tg_id, `
+//                             ⭐️Out of Golden Donuts? Wanna buy some more? ⭐️
 
-Now it's possible! Type /buy and get easy instructions on how to do it in a few mins!
+// Now it's possible! Type /buy and get easy instructions on how to do it in a few mins!
 
-⭐️Newcomer? Don't worry! Here is our FAQ ⭐️
-Type /faq and get step by step manual!
-                        `);
-                    }, index * delay);
-                });
-            } else {
-                ctx.reply(`Something went wrong`);
-            }
-        }
-    );
+// ⭐️Newcomer? Don't worry! Here is our FAQ ⭐️
+// Type /faq and get step by step manual!
+//                         `);
+//                     }, index * delay);
+//                 });
+//             } else {
+//                 ctx.reply(`Something went wrong`);
+//             }
+//         }
+//     );
 });
 
 // Test
@@ -202,7 +202,9 @@ bot.on('text', (ctx) => {
 
                 if (!error && response.statusCode == 200) {
                     ctx.reply(`That's right!\n Click on the 'Open app' button below to launch the application`).then(() => {
-                        return ctx.replyWithHTML(`Write <code>/setwallet your_wallet_address</code> (tap to copy) \uD83D\uDCCB to set you Aptos wallet in application`,
+                        return ctx.replyWithHTML(`Write <code>/setwallet your_wallet_address</code> (tap to copy) \uD83D\uDCCB to set you Aptos wallet in application/n/nType /buy and get easy instructions on how to do it in a few mins!/n/nType /faq and get step by step manual!
+
+                        `,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                         ]),);
