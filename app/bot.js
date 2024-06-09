@@ -214,11 +214,14 @@ Type /buy and get easy instructions on how to do it in a few mins!
 
 Type /faq and get step by step manual!
                         `,
-                        Markup.inlineKeyboard([
-                            Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
-                        ]),
-                        { disable_web_page_preview: true }
-                        );
+                        {
+                            disable_web_page_preview: true,
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{ text: 'Open app', web_app: { url: `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}` } }]
+                                ]
+                            }
+                        });
                     })
                 } else {
                     ctx.reply(`Something went wrong`);
