@@ -48,7 +48,7 @@ bot.command('setwallet', (ctx) => {
                 { json: { wallet_address: ctx.args[0], tg_id: ctx.chat.id } },
                 function (error, response, body) {
                     if (!error && response.statusCode == 200) {
-                        ctx.replyWithHTML(`Your wallet address is noted!\n\nAnd don't forget to join our socials to keep up with all the news!\n\nX (formerly Twitter):\nhttps://x.com/AptosFomo\n\nTG Group:\nhttps://t.me/aptosfomo\n\n`);
+                        ctx.replyWithHTML(`Your wallet address is noted!\n\nAnd don't forget to join our socials to keep up with all the news!\n\nX (formerly Twitter):\nhttps://x.com/AptosFomo\n\nTG Group:\nhttps://t.me/aptosfomo\n\n`, { disable_web_page_preview: true });
                     } else {
                         ctx.reply(`Something went wrong`);
                     }
