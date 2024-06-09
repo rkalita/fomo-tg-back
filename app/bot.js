@@ -205,12 +205,12 @@ bot.on('text', (ctx) => {
                         return ctx.replyWithHTML(`
                         Write <code>/setwallet your_wallet_address</code> (tap to copy) \uD83D\uDCCB to set you Aptos wallet in application
 
-                        Type /buy and get easy instructions on how to do it in a few mins!
-                        
-                        Type /faq and get step by step manual!
+Have not Aptos Wallet yet? Download it now!
+https://petra.app/
 
-                        Have not Aptos Wallet yet? Download it now!
-                        https://petra.app/
+Type /buy and get easy instructions on how to do it in a few mins!
+
+Type /faq and get step by step manual!
                         `,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
