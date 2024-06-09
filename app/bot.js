@@ -87,7 +87,9 @@ bot.command('buy', (ctx) => {
     2) Select APT/ APTOS FOMO pair 
     3) Buy amount you want
     
-    <i>p.s. Baptswap charging fees from transactions [0.6%]</i>`);
+    <i>p.s. Baptswap charging fees from transactions [0.6%]</i>`,
+    { disable_web_page_preview: true }
+    );
 });
 
 bot.command('faq', (ctx) => {
@@ -214,7 +216,9 @@ Type /faq and get step by step manual!
                         `,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
-                        ]),);
+                        ]),
+                        { disable_web_page_preview: true }
+                        );
                     })
                 } else {
                     ctx.reply(`Something went wrong`);
