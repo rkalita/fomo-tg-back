@@ -202,7 +202,7 @@ bot.on('text', (ctx) => {
 
                 if (!error && response.statusCode == 200) {
                     ctx.reply(`That's right!\n Click on the 'Open app' button below to launch the application`).then(() => {
-                        return ctx.replyWithHTML(`Write <code>/setwallet your_wallet_address</code> (tap to copy) \uD83D\uDCCB to set you Aptos wallet in application\n\nType /buy and get easy instructions on how to do it in a few mins!\n\nType /faq and get step by step manual!`,
+                        return ctx.replyWithHTML(`Write <code>/setwallet your_wallet_address</code> (tap to copy) \uD83D\uDCCB to set you Aptos wallet in application\nHaven't Aptos Wallet yet? Install it now!\nhttps://petra.app/\n\nType /buy and get easy instructions on how to do it in a few mins!\n\nType /faq and get step by step manual!`,
                         Markup.inlineKeyboard([
                             Markup.button.webApp('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`),
                         ]),);
