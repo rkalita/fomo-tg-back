@@ -526,7 +526,7 @@ async function routes(fastify, options) {
 
               console.log(`User ${userId} opened the lootbox: ${{lootbox: {item, value: item !== 'nft' ? count : 1}}}`);
 
-              reply.send({ ...updateInventory, loot: {item, value: +count, nft: nft || null}});
+              reply.send({ ...updateInventory, loot: {item, value: +count, nft: nft ? (nft.rows[0]?.title || null) : null}});
               return;
             }
 
