@@ -171,7 +171,15 @@ bot.command('mass_mail', (ctx) => {
 
 // CLEAR EVENT SCORE
 bot.command('event_reset', (ctx) => {
-    const bodyParams = { secret: process.env.INVENTORY_SECRET };
+    const args = ctx.message.text.split(' ').slice(1);
+
+    if (!args.length) {
+        ctx.reply('Usage: /event_reset <secret>');
+        return;
+    }
+
+    const secret = args[0];
+    const bodyParams = { secret };
 
     return request.post(
         `http://0.0.0.0:3000/api/event-reset`,
