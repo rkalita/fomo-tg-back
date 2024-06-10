@@ -48,11 +48,11 @@ async function routes(fastify, options) {
   fastify.get('/api/initDB', (req, reply) => {
     return fastify.pg.transact(async client => {
 
-      await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, referral_code VARCHAR(20) UNIQUE, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ, last_taps_count integer NOT NULL DEFAULT 0, captcha_rewarded_at TIMESTAMPTZ);');
+      await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, referral_code VARCHAR(20) UNIQUE, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ, last_taps_count integer NOT NULL DEFAULT 0, captcha_rewarded_at TIMESTAMPTZ, event_score integer default 0);');
       await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0, "nft" integer NOT NULL DEFAULT 0, "apt" DECIMAL(10, 2) NOT NULL DEFAULT 0, "fomo" bigint NOT NULL DEFAULT 0);');
       await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
       await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
-      await client.query('CREATE TABLE IF NOT EXISTS lootboxes (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250));');
+      await client.query('CREATE TABLE IF NOT EXISTS lootboxes (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250)), rewarded BOOLEAN DEFAULT false;');
       await client.query('CREATE TABLE IF NOT EXISTS nfts (id SERIAL PRIMARY KEY, title varchar(250));');
 
       //INDEXES
@@ -360,6 +360,25 @@ async function routes(fastify, options) {
 
       return inventoryUpdate.rows[0];
     })
+  });    
+
+  //cola SWAP
+  fastify.patch('/api/cola-swap/:tg_id', (req, reply) => {
+    return fastify.pg.transact(async client => {
+      let colaCount = 0;
+      const donuts = req.body.donuts;
+      const inventory = await client.query(`SELECT inventory.gold_donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
+
+      if (donuts > inventory.rows[0].gold_donut) {
+        return reply.status(422).send(new Error('Invalid data'));
+      }
+
+      colaCount = Math.floor(+donuts / 2);
+
+      const inventoryUpdate = await client.query(`UPDATE inventory SET super_cola= super_cola + ${colaCount}, gold_donut= gold_donut - ${colaCount * 2} WHERE tg_id='${req.params.tg_id}' RETURNING *`);
+
+      return inventoryUpdate.rows[0];
+    })
   });
 
   //CAPTCHA
@@ -631,6 +650,28 @@ async function routes(fastify, options) {
       await updateInventory(client, users.rows, body.item, body.count);
 
       return true;
+    })
+  });
+  
+  //EVENT RESET
+  fastify.post('/api/event-reset', (request, reply) => {
+    const body = request.body;
+
+    if (!body['secret'] || body['secret'] != process.env.INVENTORY_SECRET) {
+      return reply.status(422).send(new Error('Invalid data'));
+    }
+
+    return fastify.pg.transact(async client => {
+      
+      try {
+
+        await client.query(`UPDATE users set event_score = 0`);
+        return true;
+
+      } catch (error) {
+        console.error("Error updating event_score");
+        return false;
+      }
     })
   });
   

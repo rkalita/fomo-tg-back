@@ -141,7 +141,7 @@ bot.command('gift', (ctx) => {
     );
 });
 
-// Test
+// MASS MAIL
 bot.command('mass_mail', (ctx) => {
 //     request.get(
 //         `http://0.0.0.0:3000/api/users?unlimit=true`,
@@ -167,6 +167,24 @@ bot.command('mass_mail', (ctx) => {
 //             }
 //         }
 //     );
+});
+
+// CLEAR EVENT SCORE
+bot.command('event_reset', (ctx) => {
+    const bodyParams = { secret: process.env.INVENTORY_SECRET };
+
+    return request.post(
+        `http://0.0.0.0:3000/api/event-reset`,
+        { json: bodyParams },
+        function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                ctx.reply(`Event scores removed`);
+            } else {
+                ctx.reply(`Something went wrong`);
+            }
+        }
+    );
+
 });
 
 // Test
