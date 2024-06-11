@@ -97,7 +97,7 @@ async function routes(fastify, options) {
   
       try {
         const userResult = await client.query(
-          `SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.energy, 
+          `SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.event_score, users.energy, 
                   users.first_day_drink, users.referral_code, inventory.cola, inventory.super_cola, 
                   inventory.yellow_cola, inventory.lootbox, inventory.donut, inventory.gold_donut,
                   inventory.nft, inventory.fomo, inventory.apt 
