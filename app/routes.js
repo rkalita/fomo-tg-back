@@ -73,9 +73,13 @@ async function routes(fastify, options) {
     function onConnect (err, client, release) {
       if (err) return reply.send(err);
       const query = req.query;
+
+      const sql = query['weekly'] ?
+      `SELECT users.tg_id, users.tg_username, users.event_score from users ORDER BY users.event_score DESC, users.tg_username LIMIT 10` :
+      `SELECT users.tg_id, users.tg_username, users.score from users ORDER BY users.score DESC, users.tg_username${!queryParams['unlimit'] ? ' LIMIT 100' : ''}`;
   
       client.query(
-        `SELECT users.tg_id, users.tg_username, users.score from users ORDER BY users.score DESC, users.tg_username${!query['unlimit'] ? ' LIMIT 100' : ''}`,
+        sql,
         function onResult (err, result) {
           
           release()
@@ -116,6 +120,18 @@ async function routes(fastify, options) {
         );
         const position = positionResult.rows[0];
   
+        const weeklyPositionResult = await client.query(
+          `WITH ranked_table AS (
+              SELECT *, ROW_NUMBER() OVER (ORDER BY event_score DESC, users.tg_username) AS row_num 
+              FROM users
+            ) 
+            SELECT row_num 
+            FROM ranked_table 
+            WHERE tg_id = $1`,
+          [userId]
+        );
+        const weeklyPosition = weeklyPositionResult.rows[0];
+  
         const invitedResult = await client.query(
           `SELECT COUNT(*) AS count 
             FROM refs 
@@ -154,7 +170,7 @@ async function routes(fastify, options) {
         }
   
         client.release();
-        reply.send({ ...user, rate: +position.row_num, invited: +invited.count });
+        reply.send({ ...user, rate: +position.row_num, weekly_rate: +weeklyPosition.row_num, invited: +invited.count });
       } catch (err) {
         client.release();
         console.error('Database query error:', err);
@@ -313,7 +329,7 @@ async function routes(fastify, options) {
       );
   
       const updatedUserResult = await client.query(
-        'UPDATE users SET score = score + $1 * 1000, energy = energy - $1, last_taps_count = $1, updated_at = NOW() WHERE tg_id = $2 RETURNING tg_id, tg_username, wallet_address, score, energy, referral_code',
+        'UPDATE users SET score = score + $1 * 1000, event_score = event_score + $1 * 1000, energy = energy - $1, last_taps_count = $1, updated_at = NOW() WHERE tg_id = $2 RETURNING tg_id, tg_username, wallet_address, score, event_score, energy, referral_code',
         [taps, tg_id]
       );
   
