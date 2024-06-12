@@ -52,8 +52,8 @@ async function routes(fastify, options) {
       await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0, "nft" integer NOT NULL DEFAULT 0, "apt" DECIMAL(10, 2) NOT NULL DEFAULT 0, "fomo" bigint NOT NULL DEFAULT 0);');
       await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
       await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
-      await client.query('CREATE TABLE IF NOT EXISTS lootboxes (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250), rewarded BOOLEAN DEFAULT false, opened_at TIMESTAMPTZ);');
-      await client.query('CREATE TABLE IF NOT EXISTS nfts (id SERIAL PRIMARY KEY, title varchar(250));');
+      await client.query('CREATE TABLE IF NOT EXISTS "lootboxes" (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250), rewarded BOOLEAN DEFAULT false, opened_at TIMESTAMPTZ);');
+      await client.query('CREATE TABLE IF NOT EXISTS "nfts" (id SERIAL PRIMARY KEY, title varchar(250));');
 
       //INDEXES
       await client.query('CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users (tg_id);');
@@ -698,42 +698,77 @@ async function routes(fastify, options) {
   // -------------------------------------- MIGRATIONS routes start ---------------------------------------------
 
   // INIT TABLE. Launch just once to create the table
-  fastify.get('/api/updateDB', (req, reply) => {
+  fastify.get('/api/updateDB', async (req, reply) => {
     const query = req.query;
 
     if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
-      return reply.status(422).send(new Error('Invalid data'));
+        return reply.status(422).send(new Error('Invalid data'));
     }
-    
-    return fastify.pg.transact(async client => {
-      await client.query('CREATE TABLE IF NOT EXISTS nfts (id SERIAL PRIMARY KEY, title varchar(250))');
-      await client.query(`INSERT into nfts (title) VALUES('Creatus NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Creatus NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Nruh Bers NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('APDOG NFT')`);
-      await client.query(`INSERT into nfts (title) VALUES('Chomble NFT')`);
-    });
-  });
+
+    try {
+        // Fetch distinct tg_ids from lootboxes
+        const tgIdsResult = await fastify.pg.query(`
+            SELECT DISTINCT tg_id
+            FROM lootboxes
+            WHERE tg_id IS NOT NULL
+            AND (donut IS NOT NULL OR gold_donut IS NOT NULL OR super_cola IS NOT NULL OR yellow_cola IS NOT NULL)
+        `);
+
+        // Shuffle the tg_ids array
+        const tgIds = shuffleArray(tgIdsResult.rows.map(row => row.tg_id));
+
+        // Define update queries
+        const updateQueries = [
+            {
+                percentage: 30,
+                quantity: 25000,
+                column: 'donut'
+            },
+            {
+                percentage: 50,
+                quantity: 50000,
+                column: 'donut'
+            },
+            {
+                percentage: 10,
+                quantity: 1,
+                column: 'super_cola'
+            },
+            {
+                percentage: 10,
+                quantity: 2,
+                column: 'gold_donut'
+            }
+        ];
+
+        // Execute update queries based on percentages
+        for (const update of updateQueries) {
+            const count = Math.round((update.percentage / 100) * tgIds.length);
+            for (let i = 0; i < count; i++) {
+                await fastify.pg.query(`
+                    UPDATE inventory
+                    SET ${update.column} = ${update.column} + $1
+                    WHERE tg_id = $2
+                `, [update.quantity, tgIds[i]]);
+            }
+        }
+
+        return reply.send({ message: 'Database updated successfully' });
+    } catch (error) {
+        console.error('Error updating database:', error);
+        return reply.status(500).send(new Error('Internal Server Error'));
+    }
+});
+
+// Function to shuffle an array
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
 
   // LOOTBOXES
   fastify.get('/api/lootboxes', (req, reply) => {
