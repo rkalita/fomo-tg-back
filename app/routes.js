@@ -540,7 +540,7 @@ async function routes(fastify, options) {
 
             const unpackRandomLootbox = unpackRandomLootboxResult?.rows[0] || null;
             let item;
-            let count;
+            let count = null;
             let nft;
 
             Object.entries(unpackRandomLootbox).forEach(([key, value]) => {
@@ -550,7 +550,7 @@ async function routes(fastify, options) {
                 }
             });
 
-            if (!!count) {
+            if (count !== null) {
               // Using parameterized queries to prevent SQL injection
               const updateInventoryResult = await client.query(`UPDATE inventory SET ${item} = ${item} + $1, lootbox=lootbox - 1 WHERE tg_id=$2 RETURNING *`, [item !== 'nft' ? +count : 1, userId]);
               const updateInventory = updateInventoryResult?.rows[0] || null;
