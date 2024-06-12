@@ -544,7 +544,7 @@ async function routes(fastify, options) {
             let nft;
 
             Object.entries(unpackRandomLootbox).forEach(([key, value]) => {
-                if (value !== null && !['id','tg_id'].includes(key)) {
+                if (value !== null && !['id','tg_id','rewarded'].includes(key)) {
                     item = key;
                     count = value;
                 }
