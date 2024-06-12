@@ -52,7 +52,7 @@ async function routes(fastify, options) {
       await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0, "nft" integer NOT NULL DEFAULT 0, "apt" DECIMAL(10, 2) NOT NULL DEFAULT 0, "fomo" bigint NOT NULL DEFAULT 0);');
       await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
       await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
-      await client.query('CREATE TABLE IF NOT EXISTS lootboxes (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250)), rewarded BOOLEAN DEFAULT false;');
+      await client.query('CREATE TABLE IF NOT EXISTS lootboxes (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250), rewarded BOOLEAN DEFAULT false, opened_at TIMESTAMPTZ);');
       await client.query('CREATE TABLE IF NOT EXISTS nfts (id SERIAL PRIMARY KEY, title varchar(250));');
 
       //INDEXES
@@ -533,7 +533,7 @@ async function routes(fastify, options) {
             }
 
             const unpackRandomLootboxResult = await client.query(`
-                UPDATE lootboxes SET tg_id = $1
+                UPDATE lootboxes SET tg_id = $1, opened_at = NOW()
                 WHERE id = $2
                 RETURNING *
             `, [userId, randomFreeLootbox.id]);
