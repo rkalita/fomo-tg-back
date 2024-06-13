@@ -474,7 +474,7 @@ async function routes(fastify, options) {
                 [tg_id, activeEvent.rows[0].id]
             );
 
-            return reply.send({ event: activeEvent.rows[0] });
+            return reply.send({ event: activeEvent.rows[0], event_ends_at: activeEvent.rows[0].finish_at });
         } catch (error) {
             console.error('Error joining event:', error);
             return reply.status(500).send({ error: 'Internal Server Error' });
