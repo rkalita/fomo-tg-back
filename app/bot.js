@@ -170,7 +170,7 @@ bot.command('mass_mail', (ctx) => {
 });
 
 // CLEAR EVENT SCORE
-bot.command('event_reset', (ctx) => {
+bot.command('event_start', (ctx) => {
     const args = ctx.message.text.split(' ').slice(1);
 
     if (!args.length) {
@@ -179,14 +179,16 @@ bot.command('event_reset', (ctx) => {
     }
 
     const secret = args[0];
-    const bodyParams = { secret };
+    const name = args[1];
+
+    const bodyParams = { secret, name };
 
     return request.post(
-        `http://0.0.0.0:3000/api/event-reset`,
+        `http://0.0.0.0:3000/api/event-create`,
         { json: bodyParams },
         function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                ctx.reply(`Event scores removed`);
+                ctx.reply(`Event has been created and started`);
             } else {
                 ctx.reply(`Something went wrong`);
             }
