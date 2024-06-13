@@ -21,15 +21,6 @@ function generateCaptcha() {
     return { question, answer };
 }
 
-async function sendMessageToChat(chatId, message) {
-    try {
-        await bot.telegram.sendMessage(chatId, message, { parse_mode: 'HTML' });
-        console.log(`Message sent successfully to chat ID: ${chatId}`);
-    } catch (error) {
-        console.error(`Error sending message to chat ID ${chatId}:`, error);
-    }
-}
-
 bot.start((ctx) => {
     const { question, answer } = generateCaptcha();
     
@@ -139,34 +130,6 @@ bot.command('gift', (ctx) => {
             }
         }
     );
-});
-
-// MASS MAIL
-bot.command('mass_mail', (ctx) => {
-//     request.get(
-//         `http://0.0.0.0:3000/api/users?unlimit=true`,
-//         function (error, response, body) {
-//             const delay = 1000 / 30;
-            
-//             if (!error && response.statusCode === 200) {
-//                 const users = JSON.parse(body); // Parse the response body as JSON
-//                 users.forEach((user, index) => { // Add index as a second parameter
-//                     setTimeout(() => {
-//                         sendMessageToChat(user.tg_id, `
-//                             ⭐️Out of Golden Donuts? Wanna buy some more? ⭐️
-
-// Now it's possible! Type /buy and get easy instructions on how to do it in a few mins!
-
-// ⭐️Newcomer? Don't worry! Here is our FAQ ⭐️
-// Type /faq and get step by step manual!
-//                         `);
-//                     }, index * delay);
-//                 });
-//             } else {
-//                 ctx.reply(`Something went wrong`);
-//             }
-//         }
-//     );
 });
 
 // CLEAR EVENT SCORE
