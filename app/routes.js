@@ -688,34 +688,36 @@ async function routes(fastify, options) {
     }
   
     try {
-      const activeEvent = await client.query(
-        `SELECT * FROM events WHERE NOW() >= finish_at AND finished = false`
-      );
+      await fastify.pg.transact(async client => {
+          const activeEvent = await client.query(
+            `SELECT * FROM events WHERE NOW() >= finish_at AND finished = false`
+          );
 
-      if (!activeEvent.rows[0]) {
-          return reply.status(404).send({ error: 'No active events found' });
-      }
+          if (!activeEvent.rows[0]) {
+              return reply.status(404).send({ error: 'No active events found' });
+          }
 
-      // Mark event as finished
-      await client.query(
-        `UPDATE events SET finished = true WHERE id = $1`,
-        [activeEvent.rows[0].id]
-      );
-      
-      // Update users_events with event_score from users
-      await client.query(
-        `UPDATE users_events ue
-         SET score = u.event_score
-         FROM users u
-         WHERE ue.tg_id = u.tg_id
-           AND ue.event_id = $1`,
-        [activeEvent.rows[0].id]
-      );
+          // Mark event as finished
+          await client.query(
+            `UPDATE events SET finished = true WHERE id = $1`,
+            [activeEvent.rows[0].id]
+          );
+          
+          // Update users_events with event_score from users
+          await client.query(
+            `UPDATE users_events ue
+            SET score = u.event_score
+            FROM users u
+            WHERE ue.tg_id = u.tg_id
+              AND ue.event_id = $1`,
+            [activeEvent.rows[0].id]
+          );
 
-      // Set event_score in users table to 0
-      await client.query(`UPDATE users SET event_score = 0, joined_to_event = false`);
+          // Set event_score in users table to 0
+          await client.query(`UPDATE users SET event_score = 0, joined_to_event = false`);
 
-      return reply.send({ event: activeEvent.rows[0] });
+          return reply.send({ event: activeEvent.rows[0] });
+        });
       } catch (error) {
           console.error('Error joining event:', error);
           return reply.status(500).send({ error: 'Internal Server Error' });
