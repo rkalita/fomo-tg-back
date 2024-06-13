@@ -75,15 +75,14 @@ async function routes(fastify, options) {
       const query = req.query;
 
       const sql = query['weekly'] ?
-      `SELECT users.tg_id, users.tg_username, users.event_score from users ORDER BY users.event_score DESC, users.tg_username LIMIT 10` :
+      `SELECT users.tg_id, users.tg_username, users.event_score from users ORDER BY users.event_score DESC, users.tg_username where event_score != 0 LIMIT 10` :
       `SELECT users.tg_id, users.tg_username, users.score from users ORDER BY users.score DESC, users.tg_username${!query['unlimit'] ? ' LIMIT 100' : ''}`;
   
       client.query(
         sql,
         function onResult (err, result) {
-          
-          release()
-          reply.send(err || result.rows)
+          release();
+          reply.send(err || result.rows);
         }
       )
     }
