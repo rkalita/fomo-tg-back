@@ -186,7 +186,7 @@ bot.command('event_start', (ctx) => {
     const name = messageText.substring(firstSpaceIndex + 1).trim();
 
     // Split the remaining text into secret_key and text
-    const parts = remainingText.split(' ');
+    const parts = name.split(' ');
     if (parts.length < 2) {
         ctx.reply('Please provide a secret_key and some text.');
         return;
