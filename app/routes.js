@@ -94,6 +94,7 @@ async function routes(fastify, options) {
     try {
       const userId = req.params.id;
       const client = await fastify.pg.connect();
+      let event = {};
   
       try {
         const userResult = await client.query(
@@ -168,9 +169,17 @@ async function routes(fastify, options) {
             user.cola = inventoryResult.rows[0].cola;
           }
         }
+
+        const activeEvent = await client.query(
+          `SELECT * FROM events WHERE (NOW() BETWEEN start_at AND finish_at) AND finished = false`
+        );
+
+        if (user.joined_to_event && activeEvent.rows[0]) {
+          event = activeEvent.rows[0];
+        }
   
         client.release();
-        reply.send({ ...user, rate: +position.row_num, weekly_rate: +weeklyPosition.row_num, invited: +invited.count });
+        reply.send({ ...user, rate: +position.row_num, weekly_rate: +weeklyPosition.row_num, invited: +invited.count, event_ends_at: event?.finish_at || null });
       } catch (err) {
         client.release();
         console.error('Database query error:', err);
@@ -841,15 +850,6 @@ async function routes(fastify, options) {
       return true;
     })
 });
-
-// Function to shuffle an array
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
 
 
   // LOOTBOXES
