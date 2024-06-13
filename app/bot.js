@@ -171,15 +171,26 @@ bot.command('mass_mail', (ctx) => {
 
 // CLEAR EVENT SCORE
 bot.command('event_start', (ctx) => {
-    const args = ctx.message.text.split(' ').slice(1);
+    // Extract the entire message text after the command
+    const messageText = ctx.message.text;
 
-    if (!args.length) {
-        ctx.reply('Usage: /event_reset <secret>');
+    // Split the message text by the first space to separate the command and the rest
+    const firstSpaceIndex = messageText.indexOf(' ');
+    if (firstSpaceIndex === -1) {
+        ctx.reply('Invalid command format. (/event_start <secret key> <name of the event>)');
         return;
     }
 
-    const secret = args[0];
-    const name = args[1];
+    // Extract the command, secret_key and the rest as text
+    const secret = messageText.substring(0, firstSpaceIndex).trim();
+    const name = messageText.substring(firstSpaceIndex + 1).trim();
+
+    // Split the remaining text into secret_key and text
+    const parts = remainingText.split(' ');
+    if (parts.length < 2) {
+        ctx.reply('Please provide a secret_key and some text.');
+        return;
+    }
 
     const bodyParams = { secret, name };
 
