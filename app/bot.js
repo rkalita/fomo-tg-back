@@ -170,47 +170,47 @@ bot.command('mass_mail', (ctx) => {
 });
 
 // CLEAR EVENT SCORE
-bot.command('event_start', (ctx) => {
-    // Extract the entire message text after the command
-    const messageText = ctx.message.text;
+// bot.command('event_start', (ctx) => {
+//     // Extract the entire message text after the command
+//     const messageText = ctx.message.text;
 
-    // Split the message text by the first space to separate the command and the rest
-    const firstSpaceIndex = messageText.indexOf(' ');
-    if (firstSpaceIndex === -1) {
-        ctx.reply('Invalid command format. (/event_start <secret key> <name of the event>)');
-        return;
-    }
+//     // Split the message text by the first space to separate the command and the rest
+//     const firstSpaceIndex = messageText.indexOf(' ');
+//     if (firstSpaceIndex === -1) {
+//         ctx.reply('Invalid command format. (/event_start <secret key> <name of the event>)');
+//         return;
+//     }
 
-    // Extract the command, secret_key and the rest as text
-    const command = messageText.substring(0, firstSpaceIndex).trim();
-    const remainingText = messageText.substring(firstSpaceIndex + 1).trim();
+//     // Extract the command, secret_key and the rest as text
+//     const command = messageText.substring(0, firstSpaceIndex).trim();
+//     const remainingText = messageText.substring(firstSpaceIndex + 1).trim();
 
-    // Split the remaining text into secret_key and text
-    const parts = remainingText.split(' ');
-    if (parts.length < 2) {
-        ctx.reply('Please provide a secret_key and some text.');
-        return;
-    }
+//     // Split the remaining text into secret_key and text
+//     const parts = remainingText.split(' ');
+//     if (parts.length < 2) {
+//         ctx.reply('Please provide a secret_key and some text.');
+//         return;
+//     }
 
-    // Extract the secret_key (first part) and the rest as text
-    const secret = parts[0];
-    const name = parts.slice(1).join(' ');
+//     // Extract the secret_key (first part) and the rest as text
+//     const secret = parts[0];
+//     const name = parts.slice(1).join(' ');
 
-    const bodyParams = { secret, name };
+//     const bodyParams = { secret, name };
 
-    return request.post(
-        `http://0.0.0.0:3000/api/event-create`,
-        { json: bodyParams },
-        function (error, response, body) {
-            if (!error && response.statusCode == 201) {
-                ctx.reply(`Event has been created and started`);
-            } else {
-                ctx.reply(`Something went wrong: ${error}`);
-            }
-        }
-    );
+//     return request.post(
+//         `http://0.0.0.0:3000/api/event-create`,
+//         { json: bodyParams },
+//         function (error, response, body) {
+//             if (!error && response.statusCode == 201) {
+//                 ctx.reply(`Event has been created and started`);
+//             } else {
+//                 ctx.reply(`Something went wrong: ${error}`);
+//             }
+//         }
+//     );
 
-});
+// });
 
 // Test
 bot.command('give_me_test', (ctx) => {
