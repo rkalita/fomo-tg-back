@@ -202,7 +202,7 @@ bot.command('event_start', (ctx) => {
         `http://0.0.0.0:3000/api/event-create`,
         { json: bodyParams },
         function (error, response, body) {
-            if (!error && response.statusCode == 200) {
+            if (!error && response.statusCode == 201) {
                 ctx.reply(`Event has been created and started`);
             } else {
                 ctx.reply(`Something went wrong: ${error}`);
