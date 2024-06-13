@@ -190,8 +190,7 @@ bot.command('event_start', (ctx) => {
             if (!error && response.statusCode == 200) {
                 ctx.reply(`Event has been created and started`);
             } else {
-                console.log(error);
-                ctx.reply(`Something went wrong`);
+                ctx.reply(`Something went wrong: ${error}`);
             }
         }
     );
