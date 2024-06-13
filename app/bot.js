@@ -182,15 +182,19 @@ bot.command('event_start', (ctx) => {
     }
 
     // Extract the command, secret_key and the rest as text
-    const secret = messageText.substring(0, firstSpaceIndex).trim();
-    const name = messageText.substring(firstSpaceIndex + 1).trim();
+    const command = messageText.substring(0, firstSpaceIndex).trim();
+    const remainingText = messageText.substring(firstSpaceIndex + 1).trim();
 
     // Split the remaining text into secret_key and text
-    const parts = name.split(' ');
+    const parts = remainingText.split(' ');
     if (parts.length < 2) {
         ctx.reply('Please provide a secret_key and some text.');
         return;
     }
+
+    // Extract the secret_key (first part) and the rest as text
+    const secret = parts[0];
+    const name = parts.slice(1).join(' ');
 
     const bodyParams = { secret, name };
 
