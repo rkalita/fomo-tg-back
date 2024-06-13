@@ -178,7 +178,7 @@ async function routes(fastify, options) {
         }
   
         client.release();
-        reply.send({ ...user, rate: +position.row_num, weekly_rate: +weeklyPosition.row_num, invited: +invited.count, event_ends_at: event?.finish_at || null });
+        reply.send({ ...user, rate: +position.row_num, weekly_rate: +weeklyPosition.row_num, invited: +invited.count, event_ends_at: event?.finish_at || null, new_event: activeEvent.rows[0].name });
       } catch (err) {
         client.release();
         console.error('Database query error:', err);
