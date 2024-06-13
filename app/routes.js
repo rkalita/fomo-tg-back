@@ -689,7 +689,7 @@ async function routes(fastify, options) {
   
     try {
       const activeEvent = await client.query(
-        `SELECT * FROM events WHERE (NOW() BETWEEN start_at AND finish_at) AND finished = false`
+        `SELECT * FROM events WHERE NOW() >= finish_at AND finished = false`
       );
 
       if (!activeEvent.rows[0]) {
