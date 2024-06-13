@@ -48,7 +48,7 @@ async function routes(fastify, options) {
   fastify.get('/api/initDB', (req, reply) => {
     return fastify.pg.transact(async client => {
 
-      await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, referral_code VARCHAR(20) UNIQUE, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ, last_taps_count integer NOT NULL DEFAULT 0, captcha_rewarded_at TIMESTAMPTZ, event_score integer default 0);');
+      await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, referral_code VARCHAR(20) UNIQUE, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ, last_taps_count integer NOT NULL DEFAULT 0, captcha_rewarded_at TIMESTAMPTZ, event_score integer default 0, joined_to_event BOOLEAN DEFAULT false);');
       await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0, "nft" integer NOT NULL DEFAULT 0, "apt" DECIMAL(10, 2) NOT NULL DEFAULT 0, "fomo" bigint NOT NULL DEFAULT 0);');
       await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
       await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
@@ -98,7 +98,7 @@ async function routes(fastify, options) {
       try {
         const userResult = await client.query(
           `SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.event_score, users.energy, 
-                  users.first_day_drink, users.referral_code, inventory.cola, inventory.super_cola, 
+                  users.first_day_drink, users.referral_code, users.joined_to_event, inventory.cola, inventory.super_cola, 
                   inventory.yellow_cola, inventory.lootbox, inventory.donut, inventory.gold_donut,
                   inventory.nft, inventory.fomo, inventory.apt 
             FROM users 
@@ -329,7 +329,17 @@ async function routes(fastify, options) {
       );
   
       const updatedUserResult = await client.query(
-        'UPDATE users SET score = score + $1 * 1000, event_score = event_score + $1 * 1000, energy = energy - $1, last_taps_count = $1, updated_at = NOW() WHERE tg_id = $2 RETURNING tg_id, tg_username, wallet_address, score, event_score, energy, referral_code',
+        `UPDATE users
+         SET score = score + $1 * 1000,
+             energy = energy - $1,
+             last_taps_count = $1,
+             updated_at = NOW(),
+             event_score = CASE
+                           WHEN joined_to_event THEN event_score + $1 * 1000
+                           ELSE event_score
+                           END
+         WHERE tg_id = $2
+         RETURNING *`,
         [taps, tg_id]
       );
   
@@ -427,6 +437,40 @@ async function routes(fastify, options) {
       return {hash: captchaItems?.hash};
   
     })
+  });
+
+  //EVENT JOIN
+  fastify.patch('/api/event-join/:tg_id', (request, reply) => {
+    return fastify.pg.transact(async client => {
+        const { tg_id } = request.params;
+
+        if (!tg_id) {
+            return reply.status(400).send({ error: 'tg_id is required' });
+        }
+
+        try {
+            const activeEvent = await client.query(
+                `SELECT * FROM events WHERE (NOW() BETWEEN start_at AND finish_at) AND finished = false`
+            );
+
+            if (!activeEvent.rows[0]) {
+                return reply.status(404).send({ error: 'No active events found' });
+            }
+
+            await client.query(`UPDATE users SET joined_to_event = true WHERE tg_id = $1`, [tg_id]);
+
+            await client.query(
+                `INSERT INTO users_events (tg_id, event_id, joined_at, score)
+                 VALUES ($1, $2, NOW(), 0)`,
+                [tg_id, activeEvent.rows[0].id]
+            );
+
+            return reply.send({ event: activeEvent.rows[0] });
+        } catch (error) {
+            console.error('Error joining event:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
   });
 
   //GOLDEN CLAIM
@@ -628,6 +672,48 @@ async function routes(fastify, options) {
     }
   });
 
+  fastify.get('/api/eventCheck', async (req, reply) => {
+    const query = req.query;
+  
+    if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
+      return reply.status(422).send(new Error('Invalid data'));
+    }
+  
+    try {
+      const activeEvent = await client.query(
+        `SELECT * FROM events WHERE (NOW() BETWEEN start_at AND finish_at) AND finished = false`
+      );
+
+      if (!activeEvent.rows[0]) {
+          return reply.status(404).send({ error: 'No active events found' });
+      }
+
+      // Mark event as finished
+      await client.query(
+        `UPDATE events SET finished = true WHERE id = $1`,
+        [activeEvent.rows[0].id]
+      );
+      
+      // Update users_events with event_score from users
+      await client.query(
+        `UPDATE users_events ue
+         SET score = u.event_score
+         FROM users u
+         WHERE ue.tg_id = u.tg_id
+           AND ue.event_id = $1`,
+        [activeEvent.rows[0].id]
+      );
+
+      // Set event_score in users table to 0
+      await client.query(`UPDATE users SET event_score = 0, joined_to_event = false`);
+
+      return reply.send({ event: activeEvent.rows[0] });
+      } catch (error) {
+          console.error('Error joining event:', error);
+          return reply.status(500).send({ error: 'Internal Server Error' });
+      }
+  });
+
   // -------------------------------------- CRON routes end ---------------------------------------------
 
 
@@ -691,6 +777,46 @@ async function routes(fastify, options) {
     })
   });
   
+  //START EVENT
+  fastify.post('/api/event-create', async (req, reply) => {
+    let { name, secret } = req.body;
+
+    if (!secret || secret != process.env.INVENTORY_SECRET) {
+      return reply.status(422).send(new Error('Invalid data'));
+    }
+
+    if (!name) {
+      name = 'event name';
+    }
+
+    try {
+        // Check if there's an existing event where NOW() is between start_at and finish_at
+        const checkResult = await fastify.pg.query(
+          `SELECT COUNT(*) FROM events WHERE NOW() BETWEEN start_at AND finish_at`
+        );
+
+        if (checkResult.rows[0].count > 0) {
+            return reply.status(409).send({ error: 'An event is already active' });
+        }
+
+        // Insert event into the events table
+        const result = await fastify.pg.query(
+            `INSERT INTO events (name, start_at, finish_at)
+             VALUES ($1, NOW(), NOW() + INTERVAL '7 days')
+             RETURNING id`,
+            [name]
+        );
+
+        // Return the newly created event ID
+        const newEventId = result.rows[0].id;
+        return reply.status(201).send({ id: newEventId, message: 'Event created and started successfully' });
+    } catch (error) {
+        console.error('Error inserting event:', error);
+        return reply.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+  
   // -------------------------------------- CUSTOM routes end ---------------------------------------------
 
 
@@ -705,59 +831,15 @@ async function routes(fastify, options) {
         return reply.status(422).send(new Error('Invalid data'));
     }
 
-    try {
-        // Fetch distinct tg_ids from lootboxes
-        const tgIdsResult = await fastify.pg.query(`
-            SELECT DISTINCT tg_id
-            FROM lootboxes
-            WHERE tg_id IS NOT NULL
-            AND (donut IS NOT NULL OR gold_donut IS NOT NULL OR super_cola IS NOT NULL OR yellow_cola IS NOT NULL)
-        `);
+    return fastify.pg.transact(async client => {
 
-        // Shuffle the tg_ids array
-        const tgIds = shuffleArray(tgIdsResult.rows.map(row => row.tg_id));
+      await client.query('UPDATE users SET event_score = 0');
+      await client.query('CREATE TABLE IF NOT EXISTS "events" (id SERIAL PRIMARY KEY, name varchar(250), start_at TIMESTAMPTZ, finish_at TIMESTAMPTZ, finished BOOLEAN DEFAULT false);');
+      await client.query('CREATE TABLE IF NOT EXISTS "users_events" (tg_id varchar(250), event_id integer, joined_at TIMESTAMPTZ, score integer);');
+      await client.query('ALTER TABLE users ADD COLUMN joined_to_event BOOLEAN DEFAULT false');
 
-        // Define update queries
-        const updateQueries = [
-            {
-                percentage: 30,
-                quantity: 25000,
-                column: 'donut'
-            },
-            {
-                percentage: 50,
-                quantity: 50000,
-                column: 'donut'
-            },
-            {
-                percentage: 10,
-                quantity: 1,
-                column: 'super_cola'
-            },
-            {
-                percentage: 10,
-                quantity: 2,
-                column: 'gold_donut'
-            }
-        ];
-
-        // Execute update queries based on percentages
-        for (const update of updateQueries) {
-            const count = Math.round((update.percentage / 100) * tgIds.length);
-            for (let i = 0; i < count; i++) {
-                await fastify.pg.query(`
-                    UPDATE inventory
-                    SET ${update.column} = ${update.column} + $1
-                    WHERE tg_id = $2
-                `, [update.quantity, tgIds[i]]);
-            }
-        }
-
-        return reply.send({ message: 'Database updated successfully' });
-    } catch (error) {
-        console.error('Error updating database:', error);
-        return reply.status(500).send(new Error('Internal Server Error'));
-    }
+      return true;
+    })
 });
 
 // Function to shuffle an array
