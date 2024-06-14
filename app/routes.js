@@ -279,10 +279,6 @@ async function routes(fastify, options) {
           END
           WHERE tg_id = $1
           RETURNING *;`, [tg_id]);
-
-          if (user.rows[0].joined_to_event) {
-            await client.query('UPDATE events set super_cola=super_cola+1 WHERE finished=false')
-          }
           
       } else if (gulpItems.item === 'yellow_cola') {
         inventory = await client.query(`
@@ -417,6 +413,13 @@ async function routes(fastify, options) {
       colaCount = Math.floor(+donuts / 2);
 
       const inventoryUpdate = await client.query(`UPDATE inventory SET super_cola= super_cola + ${colaCount}, gold_donut= gold_donut - ${colaCount * 2} WHERE tg_id='${req.params.tg_id}' RETURNING *`);
+
+      const userResult = await client.query('SELECT joined_to_event FROM users WHERE tg_id = $1', [req.params.tg_id]);
+      const user = userResult.rows[0];
+
+      if (user.joined_to_event) {
+        await client.query('UPDATE events set super_cola=super_cola+$1 WHERE finished=false',[colaCount]);
+      }
 
       return inventoryUpdate.rows[0];
     })

@@ -21,6 +21,15 @@ function generateCaptcha() {
     return { question, answer };
 }
 
+async function sendMessageToChat(chatId, message) {
+    try {
+        await bot.telegram.sendMessage(chatId, message, { parse_mode: 'HTML' });
+        console.log(`Message sent successfully to chat ID: ${chatId}`);
+    } catch (error) {
+        console.error(`Error sending message to chat ID ${chatId}:`, error);
+    }
+}
+
 bot.start((ctx) => {
     const { question, answer } = generateCaptcha();
     
@@ -184,6 +193,48 @@ bot.command('give_me_test', (ctx) => {
         Markup.inlineKeyboard([
             Markup.button.webApp('Test me!', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}&mode=give_me_test`),
         ])
+    );
+});
+
+// MASS MAIL
+bot.command('mass_mail', (ctx) => {
+    const args = ctx.message.text.split(' ').slice(1);
+    const secret = args[0];
+    
+    if (!secret || secret !== process.env.INVENTORY_SECRET) {
+        ctx.reply(`Wrong secret`);
+        return;
+    }
+
+    request.get(
+        `http://0.0.0.0:3000/api/users?unlimit=true`,
+        function (error, response, body) {
+            const delay = 1000 / 30;
+
+            if (!error && response.statusCode === 200) {
+                const users = JSON.parse(body); // Parse the response body as JSON
+                users.forEach((user, index) => { // Add index as a second parameter
+                    setTimeout(() => {
+                        sendMessageToChat(user.tg_id, `
+                        🔥We happy to announce WEEKLY EVENT!🔥
+
+❓How to participate?❓
+
+1) Go to "Explore"
+2) Tap on " Join Weekly Event"
+3) Сlimb up the leaderboard using Super Cola/Yellow Cola/Red Cola
+4) Top 10 players will share prize pool after 7days.
+
+🎁Prizes🎁
+
+Top 10 players will share 300$ + 50% from bought Super Cola during event! More Super Cola will be sold  = bigger prize pool ❤️‍🔥
+                        `);
+                    }, index * delay);
+                });
+            } else {
+                ctx.reply(`Something went wrong`);
+            }
+        }
     );
 });
 
