@@ -83,11 +83,9 @@ bot.command('buy', (ctx) => {
     1.500.000...) = funds will be refunded.</i>
     
     🪙How To Buy $FOMO:🪙
-    1) Go to https://baptswap.com/#/swap
+    1) Go to https://app.panora.exchange/swap?pair=APT_FOMO
     2) Select APT/ APTOS FOMO pair 
-    3) Buy amount you want
-    
-    <i>p.s. Baptswap charging fees from transactions [0.6%]</i>`,
+    3) Buy amount you want`,
     { disable_web_page_preview: true }
     );
 });
