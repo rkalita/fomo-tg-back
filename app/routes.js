@@ -54,6 +54,8 @@ async function routes(fastify, options) {
       await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
       await client.query('CREATE TABLE IF NOT EXISTS "lootboxes" (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250), rewarded BOOLEAN DEFAULT false, opened_at TIMESTAMPTZ);');
       await client.query('CREATE TABLE IF NOT EXISTS "nfts" (id SERIAL PRIMARY KEY, title varchar(250));');
+      await client.query('CREATE TABLE IF NOT EXISTS "events" (id SERIAL PRIMARY KEY, name varchar(250), super_cola integer NOT NULL DEFAULT 0, start_at TIMESTAMPTZ, finish_at TIMESTAMPTZ, finished BOOLEAN DEFAULT false);');
+      await client.query('CREATE TABLE IF NOT EXISTS "users_events" (tg_id varchar(250), event_id integer, joined_at TIMESTAMPTZ, score integer);');
 
       //INDEXES
       await client.query('CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users (tg_id);');
@@ -178,7 +180,7 @@ async function routes(fastify, options) {
         }
   
         client.release();
-        reply.send({ ...user, rate: +position.row_num, weekly_rate: +weeklyPosition.row_num, invited: +invited.count, event_ends_at: event?.finish_at || null, new_event: activeEvent.rows[0].name });
+        reply.send({ ...user, rate: +position.row_num, weekly_rate: +weeklyPosition.row_num, invited: +invited.count, event_ends_at: event?.finish_at || null, active_event: activeEvent.rows[0].name });
       } catch (err) {
         client.release();
         console.error('Database query error:', err);
@@ -264,10 +266,10 @@ async function routes(fastify, options) {
             ELSE first_day_drink
           END
           WHERE tg_id = $1
-          RETURNING tg_username, wallet_address, score, energy;`, [tg_id]);
+          RETURNING tg_username, wallet_address, score, energy, joined_to_event;`, [tg_id]);
   
       } else if (gulpItems.item === 'super_cola') {
-        user = await client.query('UPDATE users SET energy = 100 WHERE tg_id = $1 RETURNING tg_username, wallet_address, score, energy;', [tg_id]);
+        user = await client.query('UPDATE users SET energy = 100 WHERE tg_id = $1 RETURNING tg_username, wallet_address, score, energy, joined_to_event;', [tg_id]);
   
         inventory = await client.query(`
           UPDATE inventory
@@ -277,6 +279,11 @@ async function routes(fastify, options) {
           END
           WHERE tg_id = $1
           RETURNING *;`, [tg_id]);
+
+          if (user.rows[0].joined_to_event) {
+            await client.query('UPDATE events set super_cola=super_cola+1 WHERE finished=false')
+          }
+          
       } else if (gulpItems.item === 'yellow_cola') {
         inventory = await client.query(`
           UPDATE inventory
