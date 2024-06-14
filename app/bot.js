@@ -199,23 +199,23 @@ bot.command('give_me_test', (ctx) => {
 // MASS MAIL
 bot.command('mass_mail', (ctx) => {
     const args = ctx.message.text.split(' ').slice(1);
-    const secret = args[0];
+    // const secret = args[0];
     
-    if (!secret || secret !== process.env.INVENTORY_SECRET) {
-        ctx.reply(`Wrong secret`);
-        return;
-    }
+    // if (!secret || secret !== process.env.INVENTORY_SECRET) {
+    //     ctx.reply(`Wrong secret`);
+    //     return;
+    // }
 
-    request.get(
-        `http://0.0.0.0:3000/api/users?unlimit=true`,
-        function (error, response, body) {
-            const delay = 1000 / 30;
+    // request.get(
+    //     `http://0.0.0.0:3000/api/users?unlimit=true`,
+    //     function (error, response, body) {
+    //         const delay = 1000 / 30;
 
-            if (!error && response.statusCode === 200) {
-                const users = JSON.parse(body); // Parse the response body as JSON
-                users.forEach((user, index) => { // Add index as a second parameter
-                    setTimeout(() => {
-                        sendMessageToChat(user.tg_id, `
+    //         if (!error && response.statusCode === 200) {
+    //             const users = JSON.parse(body); // Parse the response body as JSON
+                // users.forEach((user, index) => { // Add index as a second parameter
+                //     setTimeout(() => {
+                        sendMessageToChat(274490662, `
                         🔥We happy to announce WEEKLY EVENT!🔥
 
 ❓How to participate?❓
@@ -229,13 +229,13 @@ bot.command('mass_mail', (ctx) => {
 
 <b>Top 10 players will share 300$ + 50% from bought Gold Donuts during event! More Gold Donuts will be sold  = bigger prize pool</b> ❤️‍🔥
                         `);
-                    }, index * delay);
-                });
-            } else {
-                ctx.reply(`Something went wrong`);
-            }
-        }
-    );
+                    // }, index * delay);
+    //             });
+    //         } else {
+    //             ctx.reply(`Something went wrong`);
+    //         }
+    //     }
+    // );
 });
 
 // Handle text messages
