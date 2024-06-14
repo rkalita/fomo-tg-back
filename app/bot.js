@@ -221,13 +221,13 @@ bot.command('mass_mail', (ctx) => {
 ❓How to participate?❓
 
 1) Go to "Explore"
-2) Tap on " Join Weekly Event"
+2) Tap on "Join Weekly Event"
 3) Сlimb up the leaderboard using Super Cola/Yellow Cola/Red Cola
 4) Top 10 players will share prize pool after 7days.
 
 🎁Prizes🎁
 
-Top 10 players will share 300$ + 50% from bought Super Cola during event! More Super Cola will be sold  = bigger prize pool ❤️‍🔥
+<b>Top 10 players will share 300$ + 50% from bought Gold Donuts during event! More Gold Donuts will be sold  = bigger prize pool</b> ❤️‍🔥
                         `);
                     }, index * delay);
                 });
