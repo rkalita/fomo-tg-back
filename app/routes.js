@@ -301,7 +301,7 @@ async function routes(fastify, options) {
             ELSE 100
           END
           WHERE tg_id = $1
-          RETURNING tg_username, wallet_address, score, energy;`, [tg_id]);
+          RETURNING tg_username, wallet_address, score, energy, joined_to_event;`, [tg_id]);
       }
   
       const updatedInventory = inventory.rows[0];
