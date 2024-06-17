@@ -202,7 +202,7 @@ bot.command('users', (ctx) => {
 
     if (option === 'help') {
         return ctx.replyWithHTML(`
-                        Usage - /users {wallets/score/event/refs/refs_rewarded} <params>
+                        Usage - /users {wallets/score/event/refs/refs_rewarded} params
 
 Options:
 
@@ -212,9 +212,9 @@ score - count of users with score
 
 event - count of users joined to active event
 
-refs - count of refferers(/users refs <ref_code>)
+refs - count of refferers(/users refs ref_code)
 
-refs_rewarded - count of refferers wit rewards(/users refs_rewarded <ref_code>)
+refs_rewarded - count of refferers wit rewards(/users refs_rewarded ref_code)
                         `)
     }
 
