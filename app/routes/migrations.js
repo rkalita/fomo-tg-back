@@ -49,14 +49,99 @@ async function routes(fastify, options) {
             const query = req.query;
 
             if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
-            return reply.status(422).send(new Error('Invalid data'));
+                return reply.status(422).send(new Error('Invalid data'));
             }
 
-            for (let i = 0; i < 200; i++) {
-            await client.query(`INSERT INTO lootboxes (yellow_cola) VALUES ($1)`,
-            [1]
-            )
+            // Define the loot items with exact counts
+            const lootCounts = [
+                { apt: 0.1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 200 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: 1000, count: 8 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: 165, count: 192 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 400 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 2, yellow_cola: null, super_cola: null, dumdum: null, count: 200 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 100 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 500 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 2, super_cola: null, dumdum: null, count: 200 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 3, super_cola: null, dumdum: null, count: 100 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 400 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 2, dumdum: null, count: 200 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 3, dumdum: null, count: 100 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1500 }, // Empty Box
+                { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 10 },
+                { apt: 10, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1 },
+                { apt: null, fomo: null, nft: null, donut:50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 500 },
+                { apt: null, fomo: null, nft: null, donut:75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 200 },
+                { apt: null, fomo: null, nft: null, donut:150000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 100 },
+                { apt: null, fomo: null, nft: null, donut:300000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 64 },
+            ];
+
+            // Function to shuffle an array
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
             }
+
+            async function generateAndInsertLootboxes() {
+                const lootboxes = [];
+
+                // Generate rows for each loot item
+                lootCounts.forEach(item => {
+                for (let i = 0; i < item.count; i++) {
+                    const lootbox = {
+                    apt: item.apt,
+                    fomo: item.fomo,
+                    nft: null,
+                    gold_donut: item.gold_donut,
+                    donut: item.donut,
+                    yellow_cola: item.yellow_cola,
+                    super_cola: item.super_cola,
+                    dumdum: item.dumdum
+                    };
+
+                    lootboxes.push(lootbox);
+                }
+                });
+
+                // Shuffle the lootboxes array
+                shuffle(lootboxes);
+
+                try {
+                await client.query('BEGIN');
+
+                for (const lootbox of lootboxes) {
+                    const query = `
+                    INSERT INTO lootboxes (apt, fomo, nft, gold_donut, yellow_cola, super_cola, donut, dumdum)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    `;
+
+                    const values = [
+                    lootbox.apt || null,
+                    lootbox.fomo || null,
+                    lootbox.nft || null,
+                    lootbox.gold_donut || null,
+                    lootbox.yellow_cola || null,
+                    lootbox.super_cola || null,
+                    lootbox.donut || null,
+                    lootbox.dumdum || null,
+                    ];
+
+                    await client.query(query, values);
+                }
+
+                await client.query('COMMIT');
+                console.log('Lootboxes generated and inserted successfully');
+                } catch (err) {
+                await client.query('ROLLBACK');
+                console.error('Error generating or inserting lootboxes:', err);
+                } finally {
+                await client.end();
+                }
+            }
+
+            generateAndInsertLootboxes();
         });
     });
 }
