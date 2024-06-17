@@ -1,29 +1,9 @@
 async function routes(fastify, options) {
+  const getTransatcions = require('./routes/helpers/transactions.helper');
   const { Aptos, AptosConfig, Network } = require('@aptos-labs/ts-sdk');
   const aptosConfig = new AptosConfig({ network: Network.MAINNET });
   const aptos = new Aptos(aptosConfig);
-  const destWalletAddress = '0xf141d0e3815513d23fb0a25a891e61fcf49bde39254c22cd472d3b7c920840ca'; //Fomo-donut.apt
-
-  const getTransatcions = async (walletAddress, existedTransactions) => {
-    try {
-      const transactions = await aptos.getAccountTransactions({ accountAddress: walletAddress, options: {limit: 20} });
-      return transactions.filter(transaction => {
-          return transaction.payload.type_arguments.includes('0xf891d2e004973430cc2bbbee69f3d0f4adb9c7ae03137b4579f7bb9979283ee6::APTOS_FOMO::APTOS_FOMO') &&
-              transaction.payload.arguments.includes(destWalletAddress) &&
-              (existedTransactions ? !existedTransactions.includes(transaction.timestamp) : true) &&
-              transaction.success == true &&
-              transaction.vm_status == 'Executed successfully';
-      }).map(transaction => {
-          return {
-              timestamp: transaction.timestamp, 
-              amount: transaction.events.filter((event) => event.type='0x1::coin::DepositEvent')[0].data.amount / 1000000
-          };
-      });
-    } catch (error) {
-        console.error("Error fetching transactions:", error);
-        return false;
-    }
-  }
+  const destWalletAddress = '0xf141d0e3815513d23fb0a25a891e61fcf49bde39254c22cd472d3b7c920840ca'; //fomo-donut.apt
 
   //Set wallet address
   fastify.post('/api/wallet', (request, reply) => {
@@ -42,192 +22,6 @@ async function routes(fastify, options) {
         }
       )
     }
-  });
-
-  // INIT TABLE. Launch just once to create the table
-  fastify.get('/api/initDB', (req, reply) => {
-    return fastify.pg.transact(async client => {
-
-      await client.query('CREATE TABLE IF NOT EXISTS "users" ("tg_id" varchar(250) PRIMARY KEY,"tg_username" varchar(250),"wallet_address" varchar(250) UNIQUE,"score" integer, "energy" integer NOT NULL DEFAULT 0, referral_code VARCHAR(20) UNIQUE, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "first_day_drink" TIMESTAMPTZ, last_taps_count integer NOT NULL DEFAULT 0, captcha_rewarded_at TIMESTAMPTZ, event_score integer default 0, joined_to_event BOOLEAN DEFAULT false);');
-      await client.query('CREATE TABLE IF NOT EXISTS "inventory" ("tg_id" varchar(250) PRIMARY KEY,"cola" integer NOT NULL DEFAULT 0,"super_cola" integer NOT NULL DEFAULT 0,"yellow_cola" integer NOT NULL DEFAULT 0,"donut" integer NOT NULL DEFAULT 0,"gold_donut" integer NOT NULL DEFAULT 0, "lootbox" integer NOT NULL DEFAULT 0, "nft" integer NOT NULL DEFAULT 0, "apt" DECIMAL(10, 2) NOT NULL DEFAULT 0, "fomo" bigint NOT NULL DEFAULT 0);');
-      await client.query('CREATE TABLE IF NOT EXISTS "refs" ("referral_id" varchar(250),"referrer_id" varchar(250) UNIQUE,"rewarded" TIMESTAMPTZ,"created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
-      await client.query('CREATE TABLE IF NOT EXISTS "transactions" ("wallet_address" varchar(250),"date" BIGINT,"amount" INTEGER NOT NULL DEFAULT 0, "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
-      await client.query('CREATE TABLE IF NOT EXISTS "lootboxes" (id SERIAL PRIMARY KEY, apt DECIMAL(10, 2), fomo BIGINT, nft integer, donut BIGINT, gold_donut INTEGER, yellow_cola INTEGER,super_cola INTEGER, tg_id varchar(250), rewarded BOOLEAN DEFAULT false, opened_at TIMESTAMPTZ);');
-      await client.query('CREATE TABLE IF NOT EXISTS "nfts" (id SERIAL PRIMARY KEY, title varchar(250));');
-      await client.query('CREATE TABLE IF NOT EXISTS "events" (id SERIAL PRIMARY KEY, name varchar(250), super_cola integer NOT NULL DEFAULT 0, start_at TIMESTAMPTZ, finish_at TIMESTAMPTZ, finished BOOLEAN DEFAULT false);');
-      await client.query('CREATE TABLE IF NOT EXISTS "users_events" (tg_id varchar(250), event_id integer, joined_at TIMESTAMPTZ, score integer);');
-
-      //INDEXES
-      await client.query('CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users (tg_id);');
-      await client.query('CREATE INDEX IF NOT EXISTS idx_users_score ON users (score);');
-      await client.query('CREATE INDEX IF NOT EXISTS idx_inventory_tg_id ON inventory (tg_id);');
-      await client.query('CREATE INDEX IF NOT EXISTS idx_refs_referrer_id ON refs (referrer_id);');
-      await client.query('CREATE INDEX IF NOT EXISTS idx_refs_rewarded ON refs (rewarded);');
-
-      return true;
-    })
-  });
-
-  // GET users
-  fastify.get('/api/users', (req, reply) => {  
-    fastify.pg.connect(onConnect)
-  
-    function onConnect (err, client, release) {
-      if (err) return reply.send(err);
-      const query = req.query;
-
-      const sql = query['weekly'] ?
-      `SELECT users.tg_id, users.tg_username, users.event_score FROM users WHERE users.event_score != 0 ORDER BY users.event_score DESC, users.tg_username LIMIT 10` :
-      `SELECT users.tg_id, users.tg_username, users.score from users ORDER BY users.score DESC, users.tg_username${!query['unlimit'] ? ' LIMIT 100' : ''}`;
-  
-      client.query(
-        sql,
-        function onResult (err, result) {
-          release();
-          reply.send(err || result.rows);
-        }
-      )
-    }
-  })
-
-  //GET ONE USER
-  fastify.get('/api/users/:id', async (req, reply) => {
-    try {
-      const userId = req.params.id;
-      const client = await fastify.pg.connect();
-      let event = {};
-  
-      try {
-        const userResult = await client.query(
-          `SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.event_score, users.energy, 
-                  users.first_day_drink, users.referral_code, users.joined_to_event, inventory.cola, inventory.super_cola, 
-                  inventory.yellow_cola, inventory.lootbox, inventory.donut, inventory.gold_donut,
-                  inventory.nft, inventory.fomo, inventory.apt 
-            FROM users 
-            INNER JOIN inventory ON users.tg_id = inventory.tg_id 
-            WHERE users.tg_id = $1`,
-          [userId]
-        );
-        let user = userResult.rows[0];
-  
-        const positionResult = await client.query(
-          `WITH ranked_table AS (
-              SELECT *, ROW_NUMBER() OVER (ORDER BY score DESC, users.tg_username) AS row_num 
-              FROM users
-            ) 
-            SELECT row_num 
-            FROM ranked_table 
-            WHERE tg_id = $1`,
-          [userId]
-        );
-        const position = positionResult.rows[0];
-  
-        const weeklyPositionResult = await client.query(
-          `WITH ranked_table AS (
-              SELECT *, ROW_NUMBER() OVER (ORDER BY event_score DESC, users.tg_username) AS row_num 
-              FROM users
-            ) 
-            SELECT row_num 
-            FROM ranked_table 
-            WHERE tg_id = $1`,
-          [userId]
-        );
-        const weeklyPosition = weeklyPositionResult.rows[0];
-  
-        const invitedResult = await client.query(
-          `SELECT COUNT(*) AS count 
-            FROM refs 
-            WHERE referral_id = $1`,
-          [userId]
-        );
-        const invited = invitedResult.rows[0];
-  
-        if (user.cola < 4 && user.first_day_drink) {
-          const firstDayDrinkDateTime = new Date(user.first_day_drink);
-          const currentDate = new Date();
-          const timeDifferenceHours = (currentDate - firstDayDrinkDateTime) / (1000 * 60 * 60);
-  
-          if (timeDifferenceHours >= 6) {
-            const recoveredBottlesCount = Math.floor(timeDifferenceHours / 6);
-            const inventoryResult = await client.query(
-              `UPDATE inventory
-                SET cola = CASE
-                  WHEN cola + $1 <= 4 THEN cola + $1
-                  ELSE 4
-                END
-                WHERE tg_id = $2 
-                RETURNING cola`,
-              [recoveredBottlesCount, userId]
-            );
-  
-            await client.query(
-              `UPDATE users 
-                SET first_day_drink = first_day_drink + INTERVAL '6 hours' * $1 
-                WHERE tg_id = $2`,
-              [recoveredBottlesCount, userId]
-            );
-  
-            user.cola = inventoryResult.rows[0].cola;
-          }
-        }
-
-        const activeEvent = await client.query(
-          `SELECT * FROM events WHERE (NOW() BETWEEN start_at AND finish_at) AND finished = false`
-        );
-
-        if (user.joined_to_event && activeEvent.rows[0]) {
-          event = activeEvent.rows[0];
-        }
-  
-        client.release();
-        reply.send({ ...user, rate: +position.row_num, weekly_rate: +weeklyPosition.row_num, invited: +invited.count, event_ends_at: event?.finish_at || null, active_event: activeEvent?.rows?.length ? activeEvent.rows[0].name : null});
-      } catch (err) {
-        client.release();
-        console.error('Database query error:', err);
-        reply.status(500).send(new Error('Internal Server Error'));
-      }
-    } catch (err) {
-      console.error('Connection error:', err);
-      reply.status(500).send(new Error('Internal Server Error'));
-    }
-  });
-  
-
-  //Create user
-  fastify.post('/api/users', (request, reply) => {
-    return fastify.pg.transact(async client => {
-      const newUser = request.body;
-      const randomString = Array.from(crypto.getRandomValues(new Uint8Array(15)))
-                          .map(b => String.fromCharCode(65 + b % 26))
-                          .join('');
-      const refCode = btoa(randomString).substring(0, 15);
-
-      const userExists = await client.query(`SELECT * FROM users WHERE tg_id='${newUser.tg_id}'`);
-
-      if (!userExists?.rows?.length) {
-        const users = await client.query(`INSERT into users (tg_id,tg_username,score,energy, referral_code) VALUES(${newUser.tg_id},'${newUser.tg_username || 'DonutLover'}',0,50,'${refCode}') ON CONFLICT DO NOTHING RETURNING tg_id;`);
-        await client.query(`INSERT into inventory (tg_id,cola,super_cola,donut,gold_donut) VALUES(${newUser.tg_id},2,0,0,0) ON CONFLICT DO NOTHING;`);
-
-        if (users.rows?.length && newUser?.refCode) {
-          const refUser = await client.query(`SELECT tg_id FROM users WHERE referral_code='${newUser?.refCode}'`);
-          if (refUser.rows?.length) {
-            await client.query(`INSERT INTO refs (referral_id, referrer_id)
-            SELECT '${refUser.rows[0].tg_id}', '${newUser.tg_id}'
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM refs
-                WHERE referrer_id = '${newUser.tg_id}'
-                  AND referral_id = '${refUser.rows[0].tg_id}'
-            );`);
-          }
-        }
-        console.log(`NEW_USER - User id: ${users.rows[0].tg_id}, score: ${users.rows[0].score}, energy: ${users.rows[0].energy}`);
-  
-        return users.rows[0];
-      }
-  
-      return userExists.rows[0];
-    })
   });
 
   //GULP
@@ -359,70 +153,6 @@ async function routes(fastify, options) {
   
       return { ...updatedUser, ...updatedInventory };
     });
-  });    
-
-  //Golden SWAP
-  fastify.patch('/api/swap/:tg_id', (req, reply) => {
-    return fastify.pg.transact(async client => {
-      let goldenDonutsCount = 0;
-      const donuts = req.body.donuts;
-      const inventory = await client.query(`SELECT inventory.donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
-
-      if (donuts > inventory.rows[0].donut) {
-        return reply.status(422).send(new Error('Invalid data'));
-      }
-
-      goldenDonutsCount = Math.floor(+donuts / 100000);
-
-      const inventoryUpdate = await client.query(`UPDATE inventory SET gold_donut= gold_donut + ${goldenDonutsCount}, donut= donut - ${goldenDonutsCount * 100000} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut`);
-
-      return inventoryUpdate.rows[0];
-    })
-  });    
-
-  //Lucky SWAP
-  fastify.patch('/api/lucky-swap/:tg_id', (req, reply) => {
-    return fastify.pg.transact(async client => {
-      let lootboxCount = 0;
-      const donuts = req.body.donuts;
-      const inventory = await client.query(`SELECT inventory.gold_donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
-
-      if (donuts > inventory.rows[0].gold_donut) {
-        return reply.status(422).send(new Error('Invalid data'));
-      }
-
-      lootboxCount = Math.floor(+donuts / 3);
-
-      const inventoryUpdate = await client.query(`UPDATE inventory SET lootbox= lootbox + ${lootboxCount}, gold_donut= gold_donut - ${lootboxCount * 3} WHERE tg_id='${req.params.tg_id}' RETURNING cola, super_cola, donut, gold_donut, lootbox`);
-
-      return inventoryUpdate.rows[0];
-    })
-  });    
-
-  //cola SWAP
-  fastify.patch('/api/cola-swap/:tg_id', (req, reply) => {
-    return fastify.pg.transact(async client => {
-      let colaCount = 0;
-      const donuts = req.body.donuts;
-      const inventory = await client.query(`SELECT inventory.gold_donut FROM inventory WHERE inventory.tg_id='${req.params.tg_id}'`);
-
-      if (donuts > inventory.rows[0].gold_donut) {
-        return reply.status(422).send(new Error('Invalid data'));
-      }
-
-      colaCount = Math.floor(+donuts / 2);
-
-      const inventoryUpdate = await client.query(`UPDATE inventory SET super_cola= super_cola + ${colaCount}, gold_donut= gold_donut - ${colaCount * 2} WHERE tg_id='${req.params.tg_id}' RETURNING *`);
-
-      const userResult = await client.query('SELECT joined_to_event FROM users WHERE tg_id = $1', [req.params.tg_id]);
-      const user = userResult.rows[0];
-
-      if (user.joined_to_event) {
-        await client.query('UPDATE events set super_cola=super_cola+$1 WHERE finished=false',[colaCount]);
-      }
-
-      return inventoryUpdate.rows[0];
-    })
   });
 
   //CAPTCHA
@@ -533,7 +263,7 @@ async function routes(fastify, options) {
         const existedTransactions = existedTransactionsResult?.rows?.map(transaction => transaction?.date);
   
         // Make sure to define the getTransactions function or import it if it's external
-        const transactions = await getTransatcions(wallet, existedTransactions);
+        const transactions = await getTransatcions(wallet, existedTransactions, aptos, destWalletAddress);
 
         if (
           !transactions || 
@@ -587,6 +317,7 @@ async function routes(fastify, options) {
                 ORDER BY RANDOM()
                 LIMIT 1
             `);
+
             const randomFreeLootbox = randomFreeLootboxResult?.rows[0] || null;
 
             if (!randomFreeLootbox) {
@@ -604,6 +335,7 @@ async function routes(fastify, options) {
             let item;
             let count = null;
             let nft;
+            let exclusiveNft;
 
             Object.entries(unpackRandomLootbox).forEach(([key, value]) => {
                 if (value !== null && !['id','tg_id','rewarded','opened_at'].includes(key)) {
@@ -618,12 +350,24 @@ async function routes(fastify, options) {
               const updateInventory = updateInventoryResult?.rows[0] || null;
 
               if (item === 'nft') {
-                nft = await client.query('SELECT nfts FROM inventory WHERE id = $1', [unpackRandomLootbox.nft]);
+                nft = await client.query('SELECT * FROM nfts WHERE id = $1', [unpackRandomLootbox.nft]);
               }
 
-              console.log(`User ${userId} opened the lootbox: ${{lootbox: {item, value: item !== 'nft' ? count : 1}}}`);
+              if (item === 'exclusive_nft') {
+                exclusiveNft = await client.query('SELECT * FROM exclusive_nfts WHERE id = $1', [unpackRandomLootbox.exclusive_nft]);
+              }
 
-              reply.send({ ...updateInventory, loot: {item, value: +count, nft: nft ? (nft.rows[0]?.title || null) : null}});
+              reply.send(
+                { 
+                  ...updateInventory, 
+                  loot: {
+                    item, 
+                    value: +count, 
+                    nft: nft ? (nft.rows[0]?.title || null) : null,
+                    exclusive_nft: exclusiveNft ? (exclusiveNft.rows[0]?.title || null) : null,
+                  }
+                }
+              );
               return;
             }
 
@@ -641,245 +385,7 @@ async function routes(fastify, options) {
         console.error('Connection error:', err);
         reply.status(500).send({ error: 'Internal Server Error' });
     }
-  });  
-
-  // -------------------------------------- CRON routes start ---------------------------------------------
-  
-  // INITERNAL REF REWARDS CHECKER
-  fastify.get('/api/refCheck', async (req, reply) => {
-    const query = req.query;
-  
-    if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
-      return reply.status(422).send(new Error('Invalid data'));
-    }
-  
-    try {
-      await fastify.pg.transact(async client => {
-        await client.query(`
-          WITH eligible_referrers AS (
-            SELECT refs.referral_id, COUNT(*) AS referrers_count
-            FROM refs
-            JOIN users ON refs.referrer_id = users.tg_id
-            WHERE users.score >= 100000 AND refs.rewarded IS NULL
-            GROUP BY refs.referral_id
-          )
-          UPDATE inventory
-          SET donut = donut + (25000 * eligible_referrers.referrers_count)
-          FROM eligible_referrers
-          WHERE inventory.tg_id = eligible_referrers.referral_id;
-        `);
-  
-        await client.query(`
-          WITH eligible_referrers AS (
-            SELECT refs.referral_id
-            FROM refs
-            JOIN users ON refs.referrer_id = users.tg_id
-            WHERE users.score >= 100000 AND refs.rewarded IS NULL
-          )
-          UPDATE refs
-          SET rewarded = NOW()
-          FROM eligible_referrers
-          WHERE refs.referral_id = eligible_referrers.referral_id;
-        `);
-      });
-  
-      reply.send({ success: true });
-    } catch (error) {
-      console.error('Transaction failed', error);
-      reply.status(500).send(new Error('Internal Server Error'));
-    }
   });
-
-  fastify.get('/api/eventCheck', async (req, reply) => {
-    const query = req.query;
-  
-    if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
-      return reply.status(422).send(new Error('Invalid data'));
-    }
-  
-    try {
-      await fastify.pg.transact(async client => {
-          const activeEvent = await client.query(
-            `SELECT * FROM events WHERE NOW() >= finish_at AND finished = false`
-          );
-
-          if (!activeEvent.rows[0]) {
-              return reply.status(404).send({ error: 'No active events found' });
-          }
-
-          // Mark event as finished
-          await client.query(
-            `UPDATE events SET finished = true WHERE id = $1`,
-            [activeEvent.rows[0].id]
-          );
-          
-          // Update users_events with event_score from users
-          await client.query(
-            `UPDATE users_events ue
-            SET score = u.event_score
-            FROM users u
-            WHERE ue.tg_id = u.tg_id
-              AND ue.event_id = $1`,
-            [activeEvent.rows[0].id]
-          );
-
-          // Set event_score in users table to 0
-          await client.query(`UPDATE users SET event_score = 0, joined_to_event = false`);
-
-          return reply.send({ event: activeEvent.rows[0] });
-        });
-      } catch (error) {
-          console.error('Error joining event:', error);
-          return reply.status(500).send({ error: 'Internal Server Error' });
-      }
-  });
-
-  // -------------------------------------- CRON routes end ---------------------------------------------
-
-
-  // -------------------------------------- CUSTOM routes start ---------------------------------------------
-
-  //ADD STUFF POST
-  fastify.post('/api/gift', (req, reply) => {
-
-    console.log(`gift request: ${JSON.stringify(req.body)}`);
-
-    const updateInventory = async function(client, users, item, count) {
-      for (const user of users) {
-        if (item !== 'cola') {
-          await client.query(`UPDATE inventory SET ${item}= ${item} + ${+count || 1} WHERE tg_id='${user.tg_id}' RETURNING *`);
-        }
-      }
-    }
-    
-    return fastify.pg.transact(async client => {
-      const body = req.body;
-      
-      if (!body?.secret || body?.secret !== process.env.INVENTORY_SECRET) {
-        return reply.status(422).send(new Error('Invalid data'));
-      }
-
-      if (!body?.wallets || !body?.wallets?.length) {
-        return reply.status(422).send(new Error('Invalid data'));
-      }
-    
-      const users = await client.query(`SELECT users.tg_id, users.wallet_address, inventory.cola FROM users JOIN inventory ON users.tg_id = inventory.tg_id WHERE users.wallet_address IN (${body?.wallets.map(item => `'${item}'`).join(', ')});`);
-
-      if (!users.rows.length) {
-        return reply.status(422).send(new Error('Not found'));
-      }
-
-      await updateInventory(client, users.rows, body.item, body.count);
-
-      return true;
-    })
-  });
-  
-  //EVENT RESET
-  fastify.post('/api/event-reset', (request, reply) => {
-    const body = request.body;
-
-    if (!body['secret'] || body['secret'] != process.env.INVENTORY_SECRET) {
-      return reply.status(422).send(new Error('Invalid data'));
-    }
-
-    return fastify.pg.transact(async client => {
-      
-      try {
-
-        await client.query(`UPDATE users set event_score = 0`);
-        return true;
-
-      } catch (error) {
-        console.error("Error updating event_score");
-        return false;
-      }
-    })
-  });
-  
-  //START EVENT
-  fastify.post('/api/event-create', async (req, reply) => {
-    let { name, secret } = req.body;
-
-    if (!secret || secret != process.env.INVENTORY_SECRET) {
-      return reply.status(422).send(new Error('Invalid data'));
-    }
-
-    if (!name) {
-      name = 'event name';
-    }
-
-    try {
-        // Check if there's an existing event where NOW() is between start_at and finish_at
-        const checkResult = await fastify.pg.query(
-          `SELECT COUNT(*) FROM events WHERE NOW() BETWEEN start_at AND finish_at`
-        );
-
-        if (checkResult.rows[0].count > 0) {
-            return reply.status(409).send({ error: 'An event is already active' });
-        }
-
-        // Insert event into the events table
-        const result = await fastify.pg.query(
-            `INSERT INTO events (name, start_at, finish_at)
-             VALUES ($1, NOW(), NOW() + INTERVAL '7 days')
-             RETURNING id`,
-            [name]
-        );
-
-        // Return the newly created event ID
-        const newEventId = result.rows[0].id;
-        return reply.status(201).send({ id: newEventId, message: 'Event created and started successfully' });
-    } catch (error) {
-        console.error('Error inserting event:', error);
-        return reply.status(500).send({ error: 'Internal Server Error' });
-    }
-});
-
-  
-  // -------------------------------------- CUSTOM routes end ---------------------------------------------
-
-
-
-  // -------------------------------------- MIGRATIONS routes start ---------------------------------------------
-
-  // INIT TABLE. Launch just once to create the table
-  fastify.get('/api/updateDB', async (req, reply) => {
-    const query = req.query;
-
-    if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
-        return reply.status(422).send(new Error('Invalid data'));
-    }
-
-    return fastify.pg.transact(async client => {
-
-      await client.query('UPDATE users SET event_score = 0');
-      await client.query('CREATE TABLE IF NOT EXISTS "events" (id SERIAL PRIMARY KEY, name varchar(250), start_at TIMESTAMPTZ, finish_at TIMESTAMPTZ, finished BOOLEAN DEFAULT false);');
-      await client.query('CREATE TABLE IF NOT EXISTS "users_events" (tg_id varchar(250), event_id integer, joined_at TIMESTAMPTZ, score integer);');
-      await client.query('ALTER TABLE users ADD COLUMN joined_to_event BOOLEAN DEFAULT false');
-
-      return true;
-    })
-});
-
-
-  // LOOTBOXES
-  fastify.get('/api/lootboxes', (req, reply) => {
-    return fastify.pg.transact(async client => {
-      const query = req.query;
-  
-      if (!query['secret'] || query['secret'] !== process.env.INVENTORY_SECRET) {
-        return reply.status(422).send(new Error('Invalid data'));
-      }
-    
-      for (let i = 0; i < 200; i++) {
-        await client.query(`INSERT INTO lootboxes (yellow_cola) VALUES ($1)`,
-        [1]
-        )
-      }
-    });
-  });
-  // -------------------------------------- MIGRATIONS routes end ---------------------------------------------
 }
   
 module.exports = routes;

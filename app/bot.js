@@ -194,6 +194,96 @@ bot.command('give_me_test', (ctx) => {
     );
 });
 
+// USERS COUNT
+bot.command('users', (ctx) => {
+    const args = ctx.message.text.split(' ').slice(1);
+    const option = args[0]; //wallets | score | event | refs | refs_rewarded
+    const param = args[1];
+
+    if (option === 'help') {
+        return ctx.replyWithHTML(`
+                        Usage - /users {wallets/score/event/refs/refs_rewarded} <params>
+
+Options:
+
+wallets - count of users with wallets
+
+score - count of users with score
+
+event - count of users joined to active event
+
+refs - count of refferers(/users refs <ref_code>)
+
+refs_rewarded - count of refferers wit rewards(/users refs_rewarded <ref_code>)
+                        `)
+    }
+
+    if (!option) {
+        return request.get(
+            `http://0.0.0.0:3000/api/users-count`,
+            function (error, response, body) {
+                if (!error) {
+                    ctx.reply(response);
+                } else {
+                    ctx.reply(`Something went wrong: ${error}`);
+                }
+            }
+        );
+    }
+
+    if ((option === 'refs' || option === 'refs_rewarded') && !args[1]) {
+        ctx.reply('Usage: /users {refs/refs_rewarded} <ref_code>');
+        return;
+    }
+    
+    
+    return request.get(
+        `http://0.0.0.0:3000/api/users-count?${option}=true${param ? '&ref_code=' + param : ''}`,
+        function (error, response, body) {
+            if (!error) {
+                ctx.reply(response);
+            } else {
+                ctx.reply(`Something went wrong: ${error}`);
+            }
+        }
+    );
+});
+
+// LOOTBOXES COUNT
+bot.command('lootboxes', (ctx) => {
+    const args = ctx.message.text.split(' ').slice(1);
+    const option = args[0]; //opened | closed
+
+    if (option === 'help') {
+        return ctx.replyWithHTML(`
+                        Usage - /lootboxes {opened/closed}
+
+Options:
+
+opened - count of all opened lootboxes
+
+closed - count of all closed lootboxes
+                        `)
+    }
+
+    if (option && !['opened','closed'].includes(option)) {
+        ctx.reply('Usage: /lootboxes {opened/closed/opened_today}');
+        return;
+    }
+    
+    return request.get(
+        `http://0.0.0.0:3000/api/lootboxes-count${option ? '?' + option + '=true': ''}`,
+        { json: bodyParams },
+        function (error, response, body) {
+            if (!error) {
+                ctx.reply(response);
+            } else {
+                ctx.reply(`Something went wrong: ${error}`);
+            }
+        }
+    );
+});
+
 // MASS MAIL
 bot.command('mass_mail', (ctx) => {
     const args = ctx.message.text.split(' ').slice(1);

@@ -3,6 +3,11 @@ fastify.register(require('fastify-postgres'), {
   connectionString: `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_SERVICE}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`,
 });
 fastify.register(require('./routes'));
+fastify.register(require('./routes/bot'));
+fastify.register(require('./routes/cron'));
+fastify.register(require('./routes/migrations'));
+fastify.register(require('./routes/swap'));
+fastify.register(require('./routes/users'));
 
 fastify.addHook("onRequest", async (request, reply) => {
 	reply.header("Access-Control-Allow-Origin", `${process.env.ALLOW_ORIGIN}`);
