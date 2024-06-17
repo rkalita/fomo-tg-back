@@ -223,7 +223,7 @@ refs_rewarded - count of refferers wit rewards(/users refs_rewarded <ref_code>)
             `http://0.0.0.0:3000/api/users-count`,
             function (error, response, body) {
                 if (!error) {
-                    ctx.reply(JSON.stringify(response));
+                    ctx.reply(response?.body);
                 } else {
                     ctx.reply(`Something went wrong: ${error}`);
                 }
@@ -241,7 +241,7 @@ refs_rewarded - count of refferers wit rewards(/users refs_rewarded <ref_code>)
         `http://0.0.0.0:3000/api/users-count?${option}=true${param ? '&ref_code=' + param : ''}`,
         function (error, response, body) {
             if (!error) {
-                ctx.reply(response);
+                ctx.reply(response?.body);
             } else {
                 ctx.reply(`Something went wrong: ${error}`);
             }
@@ -275,7 +275,7 @@ closed - count of all closed lootboxes
         `http://0.0.0.0:3000/api/lootboxes-count${option ? '?' + option + '=true': ''}`,
         function (error, response, body) {
             if (!error) {
-                ctx.reply(JSON.stringify(response));
+                ctx.reply(response?.body);
             } else {
                 ctx.reply(`Something went wrong: ${error}`);
             }
