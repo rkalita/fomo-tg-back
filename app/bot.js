@@ -31,12 +31,33 @@ async function sendMessageToChat(chatId, message) {
 }
 
 bot.start((ctx) => {
-    const { question, answer } = generateCaptcha();
-    
-    refCode[ctx.from.id] = ctx.message.text.split(' ')[1];
-    captchaData[ctx.from.id] = answer; // Store answer for the user
-    
-    ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: `Welcome to Fomsfield, where even cats are crazy for donuts! Before we proceed, please solve this \nCAPTCHA:\n\n${question}` });
+    const payload = ctx.message.text.split(' ')[1]; // Extract the payload from the /start command
+
+    if (payload && payload.startsWith('auth_')) {
+        const hash = payload.split('_')[1];
+
+        request.put(
+            `http://0.0.0.0:3000/api/users-hash`,
+            { json: { hash, tg_id: ctx.chat.id } },
+            function (error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    ctx.replyWithHTML(`You've been authenticated in FOMO TAP. Now you can turn back to your browser`);
+                } else {
+                    ctx.reply(`Something went wrong`);
+                }
+            }
+        );
+
+        ctx.reply(`You used the /auth command with hash: ${hash}`);
+    } else {
+        const { question, answer } = generateCaptcha();
+
+        
+        refCode[ctx.from.id] = ctx.message.text.split(' ')[1];
+        captchaData[ctx.from.id] = answer; // Store answer for the user
+        
+        ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: `Welcome to Fomsfield, where even cats are crazy for donuts! Before we proceed, please solve this \nCAPTCHA:\n\n${question}` });
+    }
 });
 
 bot.command('setwallet', (ctx) => {

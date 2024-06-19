@@ -173,6 +173,54 @@ async function routes(fastify, options) {
         return userExists.rows[0];
       })
     });
+    
+    fastify.patch('/api/users-check', async (request, reply) => {
+        try {
+          await fastify.pg.transact(async client => {
+            const body = request.body;
+            let userResult;
+      
+            if (!body?.hash) {
+              reply.status(404).send({ error: 'Hash is required' });
+              return;
+            }
+            
+            userResult = await client.query(`SELECT * FROM users_hash WHERE hash = $1`, [body.hash]);
+      
+            if (!userResult?.rows.length) {
+                userResult =  await client.query(`INSERT INTO users_hash (hash, updated_at) VALUES ($1, NOW()) RETURNING *`, [body.hash]);
+            }
+      
+            reply.send({ tg_id: userResult.rows[0]?.tg_id || false });
+          });
+        } catch (err) {
+          reply.status(500).send({ error: 'An error occurred', details: err.message });
+        }
+    });
+    
+    fastify.put('/api/users-hash', async (request, reply) => {
+        try {
+          await fastify.pg.transact(async client => {
+            const body = request.body;
+      
+            if (!body?.hash || !body?.tg_id) {
+              reply.status(400).send({ error: 'Hash and tg_id are required' });
+              return;
+            }
+            
+            const userResult = await client.query(`UPDATE users_hash SET tg_id = $1 WHERE hash = $2 RETURNING *`, [body.tg_id, body.hash]);
+      
+            if (!userResult.rows.length) {
+              reply.status(404).send({ error: 'User not found' });
+              return;
+            }
+      
+            reply.status(200).send(userResult.rows[0]);
+          });
+        } catch (err) {
+          reply.status(500).send({ error: 'An error occurred', details: err.message });
+        }
+    });
 }
     
 module.exports = routes;
