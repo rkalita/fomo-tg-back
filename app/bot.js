@@ -40,15 +40,13 @@ bot.start((ctx) => {
             `http://0.0.0.0:3000/api/users-hash`,
             { json: { hash, tg_id: ctx.chat.id } },
             function (error, response, body) {
-                if (!error && response.statusCode == 200) {
+                if (!error) {
                     ctx.replyWithHTML(`You've been authenticated in FOMO TAP. Now you can turn back to your browser`);
                 } else {
                     ctx.reply(`Something went wrong`);
                 }
             }
         );
-
-        ctx.reply(`You used the /auth command with hash: ${hash}`);
     } else {
         const { question, answer } = generateCaptcha();
 

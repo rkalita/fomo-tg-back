@@ -215,7 +215,7 @@ async function routes(fastify, options) {
               return;
             }
       
-            reply.status(200).send(userResult.rows[0]);
+            reply.send(userResult.rows[0]);
           });
         } catch (err) {
           reply.status(500).send({ error: 'An error occurred', details: err.message });
