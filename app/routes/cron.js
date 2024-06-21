@@ -53,7 +53,7 @@ async function routes(fastify, options) {
     try {
         await fastify.pg.transact(async client => {
             const activeEvent = await client.query(
-            `SELECT * FROM events WHERE NOW() >= finish_at AND finished = false`
+            `SELECT * FROM events WHERE finished = false`
             );
 
             if (!activeEvent.rows[0]) {
