@@ -3,6 +3,7 @@ async function routes(fastify, options) {
   const { Aptos, AptosConfig, Network } = require('@aptos-labs/ts-sdk');
   const aptosConfig = new AptosConfig({ network: Network.MAINNET });
   const aptos = new Aptos(aptosConfig);
+  const request = require('request');
   const destWalletAddress = '0xf141d0e3815513d23fb0a25a891e61fcf49bde39254c22cd472d3b7c920840ca'; //fomo-donut.apt
 
   //Set wallet address
@@ -280,6 +281,19 @@ async function routes(fastify, options) {
 
         const claimed = await updateTransactionsAndInventory(transactions, user?.wallet_address, userId, client, user?.joined_to_event);
   
+        if (claimed) {
+
+          request.patch(
+            `http://0.0.0.0:3001/api/donuts-claimed`,
+            { json: { donuts: claimed } },
+            function (error, response, body) {
+                if (error) {
+                    ctx.reply(`Claim request error`);
+                }
+            }
+          );
+        }
+
         reply.send({claimed});
       } catch (err) {
         console.error('Database query error:', err);

@@ -302,6 +302,27 @@ closed - count of all closed lootboxes
     );
 });
 
+// EVENT COMMAND
+// bot.command('event', (ctx) => {
+//     const args = ctx.message.text.split(' ').slice(1);
+//     const option = args[0]; //opened | closed
+
+//     if (option === 'help') {
+//         return ctx.replyWithHTML(`Usage - /event {username}`)
+//     }
+    
+//     return request.get(
+//         `http://0.0.0.0:3000/api/lootboxes-count${option ? '?' + option + '=true': ''}`,
+//         function (error, response, body) {
+//             if (!error) {
+//                 ctx.reply(response?.body);
+//             } else {
+//                 ctx.reply(`Something went wrong: ${error}`);
+//             }
+//         }
+//     );
+// });
+
 // MASS MAIL
 bot.command('mass_mail', (ctx) => {
     const args = ctx.message.text.split(' ').slice(1);
@@ -322,20 +343,19 @@ bot.command('mass_mail', (ctx) => {
                 users.forEach((user, index) => { // Add index as a second parameter
                     setTimeout(() => {
                         sendMessageToChat(user.tg_id, `
-                        ⚡️How To Buy <b>GOLD DONUTS</b> with $FOMO⚡️
-1) Send min. 1.000.000 (1m) $FOMO to fomo-donut.apt
-2) Launch game. Go to "Explore" and click on "Claim Donuts"
-3) Done
+🔥We happy to announce WEEKLY EVENT!🔥
 
-⚠️IMPORTANT⚠️
-<i>Minimum amount to send is 1million $FOMO (6 gold donuts). You can send any amount with round 
-numbers. For example 1..2...3...4...5... millions fomo. In case if you sent not round amount (ex. 999.999, 
-1.500.000...) = funds will be refunded.</i>
+❓How to participate?❓
 
-🪙How To Buy $FOMO:🪙
-1) Go to https://app.panora.exchange/swap?pair=APT_FOMO
-2) Select APT/ APTOS FOMO pair 
-3) Buy amount you want`);
+1) Go to "Explore"
+2) Tap on "Join Weekly Event"
+3) Сlimb up the leaderboard using Super Cola/Yellow Cola/Red Cola
+4) Top 10 players will share prize pool after 7days.
+
+🎁Prizes🎁
+
+<b>Top 10 players will share 200$ + 50% from bought Gold Donuts during event! More Gold Donuts will be sold  = bigger prize pool ❤️‍🔥</b>
+                        `);
                     }, index * delay);
                 });
             } else {
