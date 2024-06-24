@@ -13,7 +13,7 @@ async function routes(fastify, options) {
             await client.query('CREATE TABLE IF NOT EXISTS "exclusive_nfts" (id SERIAL PRIMARY KEY, title varchar(250));');
             await client.query('CREATE TABLE IF NOT EXISTS "users_hash" ("tg_id" varchar(250), hash varchar(250), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW());');
             await client.query('CREATE TABLE IF NOT EXISTS "events" (id SERIAL PRIMARY KEY, name varchar(250), super_cola integer NOT NULL DEFAULT 0, start_at TIMESTAMPTZ, finish_at TIMESTAMPTZ, finished BOOLEAN DEFAULT false);');
-            await client.query('CREATE TABLE IF NOT EXISTS "users_events" (tg_id varchar(250), event_id integer, joined_at TIMESTAMPTZ, score integer);');
+            await client.query('CREATE TABLE IF NOT EXISTS "users_events" (tg_id varchar(250), event_id integer, joined_at TIMESTAMPTZ, score integer, super_cola integer default 0, gold_donut integer default 0);');
 
             //INDEXES
             await client.query('CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users (tg_id);');

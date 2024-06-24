@@ -223,7 +223,7 @@ async function routes(fastify, options) {
 
   //GOLDEN CLAIM
   fastify.get('/api/claim/:id', async (req, reply) => {
-    const updateTransactionsAndInventory = async (transactions, walletAddress, tgId, client) => {
+    const updateTransactionsAndInventory = async (transactions, walletAddress, tgId, client, userJoinedToEvent) => {
       let goldenDonutsCount = 0;
       let totalAmount = 0;
       for (const transaction of transactions) {
@@ -239,6 +239,10 @@ async function routes(fastify, options) {
             [goldenDonutsCount, tgId]
           );
 
+          if (userJoinedToEvent) {
+            await client.query('UPDATE users_events set gold_donut=gold_donut + $1 WHERE tg_id=$2', [goldenDonutsCount, tgId]);
+          }
+
           totalAmount += goldenDonutsCount;
         }
       }
@@ -251,19 +255,19 @@ async function routes(fastify, options) {
       const client = await fastify.pg.connect();
   
       try {
-        const walletResult = await client.query('SELECT wallet_address FROM users WHERE tg_id = $1', [userId]);
-        const wallet = walletResult?.rows[0]?.wallet_address || null;
+        const userResult = await client.query('SELECT * FROM users WHERE tg_id = $1', [userId]);
+        const user = userResult?.rows[0] || {};
   
-        if (!wallet) {
+        if (!user?.wallet_address) {
           reply.status(404).send({ error: "No wallet found" });
           return;
         }
   
-        const existedTransactionsResult = await client.query('SELECT date FROM transactions WHERE wallet_address = $1', [wallet]);
+        const existedTransactionsResult = await client.query('SELECT date FROM transactions WHERE wallet_address = $1', [user?.wallet_address]);
         const existedTransactions = existedTransactionsResult?.rows?.map(transaction => transaction?.date);
   
         // Make sure to define the getTransactions function or import it if it's external
-        const transactions = await getTransatcions(wallet, existedTransactions, aptos, destWalletAddress);
+        const transactions = await getTransatcions(user?.wallet_address, existedTransactions, aptos, destWalletAddress);
 
         if (
           !transactions || 
@@ -274,7 +278,7 @@ async function routes(fastify, options) {
           return;
         }
 
-        const claimed = await updateTransactionsAndInventory(transactions, wallet, userId, client);
+        const claimed = await updateTransactionsAndInventory(transactions, user?.wallet_address, userId, client, user?.joined_to_event);
   
         reply.send({claimed});
       } catch (err) {
