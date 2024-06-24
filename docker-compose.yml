@@ -10,8 +10,6 @@ services:
     env_file: .env
     depends_on: 
       - postgres
-    networks:
-      - fomo_network
 
   postgres:
     container_name: postgres
@@ -23,12 +21,6 @@ services:
     env_file: .env
     volumes:
       - fastify_volume:/var/lib/postgres/data
-    networks:
-      - fomo_network
 
 volumes:
   fastify_volume: {}
-
-networks:
-  fomo_network:
-    driver: bridge
