@@ -365,6 +365,18 @@ bot.command('mass_mail', (ctx) => {
     );
 });
 
+bot.command('test_claim', (ctx) => {
+    request.patch(
+        `http://0.0.0.0:3001/api/donuts-claimed`,
+        { json: { donuts: 6 } },
+        function (error, response, body) {
+            if (error) {
+                ctx.reply(`Something went wrong: ${error}`);
+            }
+        }
+      );
+})
+
 // Handle text messages
 bot.on('text', (ctx) => {
     const userAnswer = parseInt(ctx.message.text, 10);
