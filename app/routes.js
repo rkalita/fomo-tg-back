@@ -288,7 +288,7 @@ async function routes(fastify, options) {
             { json: { donuts: claimed } },
             function (error, response, body) {
                 if (error) {
-                    ctx.reply(`Claim request error`);
+                    console.log(`Claim request error`);
                 }
             }
           );
