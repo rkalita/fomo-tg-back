@@ -374,11 +374,8 @@ bot.command('test_claim', (ctx) => {
         reply_markup: {
             keyboard: [
                 [
-                    Markup.button.url('Open Web App', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)
+                    Markup.button.url('Open Web App', 'https://google.com')
                 ]
-            ],
-            inline_keyboard: [
-                [{ text: 'Open app', web_app: { url: `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}` } }]
             ],
             resize_keyboard: true,
             one_time_keyboard: false
