@@ -369,7 +369,7 @@ numbers. For example 1..2...3...4...5... millions fomo. In case if you sent not 
 
 bot.command('test_claim', (ctx) => {
     request.patch(
-        `http://0.0.0.0:3001/api/donuts-claimed`,
+        `http://stb:3001/api/donuts-claimed`,
         { json: { donuts: 6 } },
         function (error, response, body) {
             if (error) {
