@@ -30,6 +30,26 @@ async function sendMessageToChat(chatId, message) {
     }
 }
 
+async function sendMessageToMe(chatId, message) {
+    try {
+        await bot.telegram.sendMessage(chatId, message, { 
+            parse_mode: 'HTML',
+            reply_markup: {
+                keyboard: [
+                    [
+                        Markup.button.webApp('Open App', `${webAppUrl}/tap?tg_id=${chatId}`)
+                    ]
+                ],
+                resize_keyboard: true,
+                one_time_keyboard: false
+            }
+        });
+        console.log(`Message sent successfully to chat ID: ${chatId}`);
+    } catch (error) {
+        console.error(`Error sending message to chat ID ${chatId}:`, error);
+    }
+}
+
 bot.start((ctx) => {
     const payload = ctx.message.text.split(' ')[1]; // Extract the payload from the /start command
 
@@ -370,17 +390,7 @@ numbers. For example 1..2...3...4...5... millions fomo. In case if you sent not 
 bot.command('test_claim', (ctx) => {
     const userInfo = ctx.chat;
 
-    ctx.reply('Click to open', {
-        reply_markup: {
-            keyboard: [
-                [
-                    Markup.button.webApp('Open App', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)
-                ]
-            ],
-            resize_keyboard: false,
-            one_time_keyboard: false
-        }
-    });
+    sendMessageToMe(274490662, `Due to a lot of info you may miss the «Open app» button, so now it’ll always be with you ❤️‍🔥`);
 });
 
 // Handle text messages
