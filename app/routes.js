@@ -284,7 +284,7 @@ async function routes(fastify, options) {
         if (claimed) {
 
           request.patch(
-            `http://0.0.0.0:3001/api/donuts-claimed`,
+            `http://stb:3001/api/donuts-claimed`,
             { json: { donuts: claimed } },
             function (error, response, body) {
                 if (error) {
