@@ -374,7 +374,7 @@ bot.command('test_claim', (ctx) => {
         reply_markup: {
             keyboard: [
                 [
-                    Markup.button.url('Open Web App', 'https://google.com')
+                    Markup.button.webApp('Open Web App', 'https://google.com')
                 ]
             ],
             resize_keyboard: true,
