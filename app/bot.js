@@ -369,11 +369,23 @@ numbers. For example 1..2...3...4...5... millions fomo. In case if you sent not 
 
 bot.command('test_claim', (ctx) => {
     const userInfo = ctx.chat;
-    
-    ctx.reply('Welcome to swapTrackBot', Markup.inlineKeyboard([
-        [Markup.button.url('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)] // Inline button that opens a link
+
+    // ctx.reply('Welcome to swapTrackBot', Markup.keyboard([
+    //     [Markup.button.url('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)] // Inline button that opens a link
+    // ]));
+
+    ctx.reply('Welcome to swapTrackBot', Markup.keyboard([
+        [Markup.button.text('Open FOMO TAP App')]
     ]));
 })
+
+bot.hears('Open FOMO TAP App', (ctx) => {
+    const userInfo = ctx.chat;
+
+    ctx.reply('Click the link below to open:', Markup.inlineKeyboard([
+        [Markup.button.url('Open FOMO TAP App', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)]
+    ]));
+});
 
 // Handle text messages
 bot.on('text', (ctx) => {
