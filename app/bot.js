@@ -374,18 +374,18 @@ bot.command('test_claim', (ctx) => {
     //     [Markup.button.url('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)] // Inline button that opens a link
     // ]));
 
-    ctx.reply('Welcome to swapTrackBot', Markup.keyboard([
-        [Markup.button.text('Open FOMO TAP App')]
-    ]));
+    ctx.reply('Click to open', {
+        reply_markup: {
+            keyboard: [
+                [
+                    Markup.button.url('Open Web App', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)
+                ]
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: false
+        }
+    });
 })
-
-bot.hears('Open FOMO TAP App', (ctx) => {
-    const userInfo = ctx.chat;
-
-    ctx.reply('Click the link below to open:', Markup.inlineKeyboard([
-        [Markup.button.url('Open FOMO TAP App', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)]
-    ]));
-});
 
 // Handle text messages
 bot.on('text', (ctx) => {
