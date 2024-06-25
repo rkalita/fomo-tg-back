@@ -377,7 +377,7 @@ bot.command('test_claim', (ctx) => {
                     Markup.button.webApp('Open App', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)
                 ]
             ],
-            resize_keyboard: true,
+            resize_keyboard: false,
             one_time_keyboard: false
         }
     });
