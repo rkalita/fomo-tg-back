@@ -370,10 +370,6 @@ numbers. For example 1..2...3...4...5... millions fomo. In case if you sent not 
 bot.command('test_claim', (ctx) => {
     const userInfo = ctx.chat;
 
-    // ctx.reply('Welcome to swapTrackBot', Markup.keyboard([
-    //     [Markup.button.url('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)] // Inline button that opens a link
-    // ]));
-
     ctx.reply('Click to open', {
         reply_markup: {
             keyboard: [
@@ -381,11 +377,14 @@ bot.command('test_claim', (ctx) => {
                     Markup.button.url('Open Web App', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)
                 ]
             ],
+            inline_keyboard: [
+                [{ text: 'Open app', web_app: { url: `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}` } }]
+            ],
             resize_keyboard: true,
             one_time_keyboard: false
         }
     });
-})
+});
 
 // Handle text messages
 bot.on('text', (ctx) => {
