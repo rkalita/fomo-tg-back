@@ -368,6 +368,8 @@ numbers. For example 1..2...3...4...5... millions fomo. In case if you sent not 
 });
 
 bot.command('test_claim', (ctx) => {
+    const userInfo = ctx.chat;
+    
     ctx.reply('Welcome to swapTrackBot', Markup.inlineKeyboard([
         [Markup.button.url('Open app', `${webAppUrl}/tap?tg_id=${userInfo?.id}&tg_username=${userInfo.username}`)] // Inline button that opens a link
     ]));
