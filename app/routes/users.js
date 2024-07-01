@@ -1,27 +1,55 @@
+const { AccountAddress } = require('@aptos-labs/ts-sdk');
+
 async function routes(fastify, options) {
     const getExclusiveNFT = require('./helpers/exclusive-nft.helper');
     
     // GET users
-    fastify.get('/api/users', (req, reply) => {  
-      fastify.pg.connect(onConnect)
-    
-      function onConnect (err, client, release) {
-        if (err) return reply.send(err);
+    fastify.get('/api/users', async (req, reply) => {  
+      try {
+        const client = await fastify.pg.connect();
         const query = req.query;
-  
-        const sql = query['weekly'] ?
-        `SELECT users.tg_id, users.tg_username, users.event_score FROM users WHERE users.event_score != 0 ORDER BY users.event_score DESC, users.tg_username LIMIT 10` :
-        `SELECT users.tg_id, users.tg_username, users.score from users ORDER BY users.score DESC, users.tg_username${!query['unlimit'] ? ' LIMIT 100' : ''}`;
-    
-        client.query(
-          sql,
-          function onResult (err, result) {
-            release();
-            reply.send(err || result.rows);
+        let sql = '';
+
+        if (query['weekly']) {
+          const activeEvent = await client.query(
+            `SELECT * FROM events WHERE finished = false`
+          );
+
+          if (activeEvent.rows.length) {
+            sql = `SELECT users.tg_id, users.tg_username, users.event_score 
+                  FROM users 
+                  WHERE users.event_score != 0 
+                  ORDER BY users.event_score DESC, users.tg_username 
+                  LIMIT 10`;
+          } else {
+            sql = `SELECT u.tg_id, u.tg_username, ue.score 
+                  FROM users u 
+                  JOIN users_events ue ON ue.tg_id = u.tg_id 
+                  WHERE ue.event_id = (
+                      SELECT id 
+                      FROM events 
+                      WHERE finished = true 
+                      ORDER BY id DESC 
+                      LIMIT 1
+                  )
+                  ORDER BY ue.score DESC 
+                  LIMIT 10`;
           }
-        )
+        } else {
+          sql = `SELECT users.tg_id, users.tg_username, users.score 
+                FROM users 
+                ORDER BY users.score DESC, users.tg_username${!query['unlimit'] ? ' LIMIT 100' : ''}`;
+        }
+
+        const result = await client.query(sql);
+        client.release();
+        reply.send(result.rows);
+
+      } catch (err) {
+        reply.send(err);
       }
-    })
+    });
+
   
     //GET ONE USER
     fastify.get('/api/users/:id', async (req, reply) => {
@@ -174,28 +202,65 @@ async function routes(fastify, options) {
       })
     });
     
-    fastify.patch('/api/users-check', async (request, reply) => {
-        try {
-          await fastify.pg.transact(async client => {
-            const body = request.body;
-            let userResult;
-      
-            if (!body?.hash) {
-              reply.status(404).send({ error: 'Hash is required' });
-              return;
-            }
-            
-            userResult = await client.query(`SELECT * FROM users_hash WHERE hash = $1`, [body.hash]);
-      
-            if (!userResult?.rows.length) {
-                userResult =  await client.query(`INSERT INTO users_hash (hash, updated_at) VALUES ($1, NOW()) RETURNING *`, [body.hash]);
-            }
-      
-            reply.send({ tg_id: userResult.rows[0]?.tg_id || false });
-          });
-        } catch (err) {
-          reply.status(500).send({ error: 'An error occurred', details: err.message });
+    // Update user
+    fastify.put('/api/users/:id', async (request, reply) => {
+      return fastify.pg.transact(async client => {
+        const userId = request.params.id;
+        const body = request.body;
+
+        // Check if the provided wallet address is valid
+        if (!AccountAddress.isValid({ input: body?.wallet_address }).valid) {
+          reply.status(422).send({ error: {wallet_address: 'Invalid wallet address' }});
+          return reply;
         }
+
+        // Check if the username already exists
+        const userWithSameUsername = await client.query(`SELECT * FROM users WHERE tg_username = $1 AND tg_id != $2`, [body?.tg_username, userId]);
+        if (userWithSameUsername?.rows.length) {
+          reply.status(422).send({ error: {tg_username: 'Username already exists' }});
+          return reply;
+        }
+
+        // Check if the wallet address already exists
+        const userWithSameWallet = await client.query(`SELECT * FROM users WHERE wallet_address = $1 AND tg_id != $2`, [body?.wallet_address, userId]);
+        if (userWithSameWallet?.rows.length) {
+          reply.status(422).send({ error: {wallet_address: 'Wallet address already exists' }});
+          return reply;
+        }
+
+        // Update user with new wallet address and username
+        const user = await client.query(`UPDATE users SET wallet_address = $1, tg_username = $2 WHERE tg_id = $3 RETURNING *`, [body?.wallet_address, body?.tg_username, userId]);
+
+        // Send the updated user back in the response
+        reply.send(user.rows[0]);
+        return reply;
+      });
+    });
+
+
+    
+    fastify.patch('/api/users-check', async (request, reply) => {
+      try {
+        await fastify.pg.transact(async client => {
+          const body = request.body;
+          let userResult;
+    
+          if (!body?.hash) {
+            reply.status(404).send({ error: 'Hash is required' });
+            return;
+          }
+          
+          userResult = await client.query(`SELECT * FROM users_hash WHERE hash = $1`, [body.hash]);
+    
+          if (!userResult?.rows.length) {
+              userResult =  await client.query(`INSERT INTO users_hash (hash, updated_at) VALUES ($1, NOW()) RETURNING *`, [body.hash]);
+          }
+    
+          reply.send({ tg_id: userResult.rows[0]?.tg_id || false });
+        });
+      } catch (err) {
+        reply.status(500).send({ error: 'An error occurred', details: err.message });
+      }
     });
     
     fastify.put('/api/users-hash', async (request, reply) => {
