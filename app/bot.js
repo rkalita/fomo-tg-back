@@ -212,6 +212,27 @@ bot.command('event_start', (ctx) => {
 
 });
 
+bot.command('event_stop', (ctx) => {
+    const args = ctx.message.text.split(' ').slice(1);
+    const secret = args[0];
+
+    if (!secret) {
+        ctx.reply('Invalid command format. (/event_stop <secret key>)');
+        return;
+    }
+
+    return request.get(
+        `http://0.0.0.0:3000/api/eventCheck?secret=${secret}`,
+        function (error, response, body) {
+            if (!error) {
+                ctx.reply(`Event has been stopped`);
+            } else {
+                ctx.reply(`Something went wrong: ${error}`);
+            }
+        }
+    );
+})
+
 // Test
 bot.command('give_me_test', (ctx) => {
     const userInfo = ctx.chat;
