@@ -374,7 +374,25 @@ bot.command('mass_mail', (ctx) => {
                 const users = JSON.parse(body); // Parse the response body as JSON
                 users.forEach((user, index) => { // Add index as a second parameter
                     setTimeout(() => {
-                        sendMessageToChat(user.tg_id, `Due to a lot of info you may miss the «Open app» button, so now it’ll always be with you ❤️‍🔥`);
+                        sendMessageToChat(
+                            user.tg_id, `
+⚡️How To Buy GOLD DONUTS with $FOMO⚡️
+1) Send min. 1.000.000 (1m) $FOMO to fomo-donut.apt
+2) Launch game. Go to "Explore" and click on "Claim Donuts"
+3) Done
+
+⚠️IMPORTANT⚠️
+Minimum amount to send is 1million $FOMO (6 gold donuts). You can send any amount with round 
+numbers. For example 1..2...3...4...5... millions fomo. In case if you sent not round amount (ex. 999.999, 
+1.500.000...) = funds will be refunded.
+
+🪙How To Buy $FOMO:🪙
+1) Go to https://app.anqa.ag/swap/APT-FOMO
+2) Select APT/ APTOS FOMO pair 
+3) Buy amount you want
+
+P.S. You can also watch our video-guide👀
+                            `);
                     }, index * delay);
                 });
             } else {
