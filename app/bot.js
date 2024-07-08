@@ -62,7 +62,7 @@ bot.start((ctx) => {
         request.get(
             `http://0.0.0.0:3000/api/users/${ctx.chat.id}`,
             function (error, response, body) {
-                if (!error) {
+                if (!error && body) {
                     ctx.replyWithHTML(`You've already been registered.`);
                 } else {
                     const { question, answer } = generateCaptcha();
