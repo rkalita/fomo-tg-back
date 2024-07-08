@@ -71,6 +71,11 @@ async function routes(fastify, options) {
             [userId]
           );
           let user = userResult.rows[0];
+
+          if (!user) {
+            reply.status(404).send(new Error('User not found'));
+            return
+          }
     
           const positionResult = await client.query(
             `WITH ranked_table AS (

@@ -59,13 +59,21 @@ bot.start((ctx) => {
             }
         );
     } else {
-        const { question, answer } = generateCaptcha();
-
+        request.get(
+            `http://0.0.0.0:3000/api/users/${ctx.chat.id}`,
+            function (error, response, body) {
+                if (!error) {
+                    ctx.replyWithHTML(`You've already been registered.`);
+                } else {
+                    const { question, answer } = generateCaptcha();
         
-        refCode[ctx.from.id] = ctx.message.text.split(' ')[1];
-        captchaData[ctx.from.id] = answer; // Store answer for the user
-        
-        ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: `Welcome to Fomsfield, where even cats are crazy for donuts! Before we proceed, please solve this \nCAPTCHA:\n\n${question}` });
+                    refCode[ctx.from.id] = ctx.message.text.split(' ')[1];
+                    captchaData[ctx.from.id] = answer; // Store answer for the user
+                    
+                    ctx.replyWithPhoto('https://aptosfomo-c4ea4.web.app/img/FOMSFIELD.png', { caption: `Welcome to Fomsfield, where even cats are crazy for donuts! Before we proceed, please solve this \nCAPTCHA:\n\n${question}` });
+                }
+            }
+        );
     }
 });
 
