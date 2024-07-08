@@ -73,6 +73,7 @@ async function routes(fastify, options) {
           let user = userResult.rows[0];
 
           if (!user) {
+            client.release();
             console.error('User not found:', userId);
             reply.status(404).send(new Error('User not found'));
             return;
