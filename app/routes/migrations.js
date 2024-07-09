@@ -55,23 +55,20 @@ async function routes(fastify, options) {
 
             // Define the loot items with exact counts
             const lootCounts = [
-                { apt: 0.1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 200 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: 1000, count: 8 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: 165, count: 192 },
+                { apt: 0.1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 100 },
                 { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 400 },
                 { apt: null, fomo: null, nft: null, donut:null, gold_donut: 2, yellow_cola: null, super_cola: null, dumdum: null, count: 200 },
                 { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 100 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 500 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 2, super_cola: null, dumdum: null, count: 200 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 3, super_cola: null, dumdum: null, count: 100 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 1500 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 2, super_cola: null, dumdum: null, count: 600 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 3, super_cola: null, dumdum: null, count: 300 },
                 { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 400 },
                 { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 2, dumdum: null, count: 200 },
                 { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 3, dumdum: null, count: 100 },
                 { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1500 }, // Empty Box
                 { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 10 },
-                { apt: 10, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1 },
                 { apt: null, fomo: null, nft: null, donut:50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 500 },
-                { apt: null, fomo: null, nft: null, donut:75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 200 },
+                { apt: null, fomo: null, nft: null, donut:75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 300 },
                 { apt: null, fomo: null, nft: null, donut:150000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 100 },
                 { apt: null, fomo: null, nft: null, donut:300000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 64 },
             ];
