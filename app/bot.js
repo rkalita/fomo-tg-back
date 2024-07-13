@@ -384,22 +384,14 @@ bot.command('mass_mail', (ctx) => {
                     setTimeout(() => {
                         sendMessageToChat(
                             user.tg_id, `
-⚡️How To Buy GOLD DONUTS with $FOMO⚡️
-1) Send min. 1.000.000 (1m) $FOMO to fomo-donut.apt
-2) Launch game. Go to "Explore" and click on "Claim Donuts"
-3) Done
+JOIN TO EVENT AND SHARE AMAZING PRIZES! 🔥
 
-⚠️IMPORTANT⚠️
-Minimum amount to send is 1million $FOMO (6 gold donuts). You can send any amount with round 
-numbers. For example 1..2...3...4...5... millions fomo. In case if you sent not round amount (ex. 999.999, 
-1.500.000...) = funds will be refunded.
+How to participate?  
+1)Go to "Explore"  
+2)Tap on "Join Weekly Event"  
+3)Сlimb up the leaderboard using Cola/Super Cola*
 
-🪙How To Buy $FOMO:🪙
-1) Go to https://app.anqa.ag/swap/APT-FOMO
-2) Select APT/ APTOS FOMO pair 
-3) Buy amount you want
-
-P.S. You can also watch our video-guide👀
+*You can buy Super cola with Gold Donuts and $FOMO
                             `);
                     }, index * delay);
                 });
