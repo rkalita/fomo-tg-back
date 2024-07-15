@@ -8,6 +8,7 @@ fastify.register(require('./routes/cron'));
 fastify.register(require('./routes/migrations'));
 fastify.register(require('./routes/swap'));
 fastify.register(require('./routes/users'));
+fastify.register(require('./routes/lootboxes'));
 // fastify.register(require('./routes/events'));
 
 fastify.addHook("onRequest", async (request, reply) => {
