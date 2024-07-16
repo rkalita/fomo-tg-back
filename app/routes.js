@@ -241,7 +241,7 @@ async function routes(fastify, options) {
           );
 
           if (userJoinedToEvent) {
-            await client.query('UPDATE users_events set gold_donut=gold_donut + $1 WHERE tg_id=$2', [goldenDonutsCount, tgId]);
+            await client.query('UPDATE users_events set gold_donut=gold_donut + $1 WHERE tg_id=$2 AND finished = false', [goldenDonutsCount, tgId]);
           }
 
           totalAmount += goldenDonutsCount;
