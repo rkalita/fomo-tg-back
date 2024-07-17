@@ -36,66 +36,71 @@ async function routes(fastify, options) {
       // Initial query to fetch current inventory values
       const inventoryResult = await client.query('SELECT cola, super_cola FROM inventory WHERE tg_id = $1', [tg_id]);
       inventory = inventoryResult.rows[0];
-  
-      console.log(`GULP INPUT - User id: ${tg_id}, item: ${gulpItems.item}, cola: ${inventory.cola}, super_cola: ${inventory.super_cola}`);
-  
-      if (gulpItems.item === 'cola') {
-        inventory = await client.query(`
-          UPDATE inventory
-          SET cola = CASE
-            WHEN cola - 1 < 0 THEN 0
-            ELSE cola - 1
-          END
-          WHERE tg_id = $1
-          RETURNING *;`, [tg_id]);
-  
-        user = await client.query(`
-          UPDATE users
-          SET energy = CASE
-            WHEN energy + 25 <= 100 THEN energy + 25
-            ELSE 100
-          END,
-          first_day_drink = CASE
-            WHEN first_day_drink IS NULL THEN NOW()
-            WHEN first_day_drink <= NOW() - INTERVAL '24 hours' THEN NOW()
-            ELSE first_day_drink
-          END
-          WHERE tg_id = $1
-          RETURNING tg_username, wallet_address, score, energy, joined_to_event;`, [tg_id]);
-  
-      } else if (gulpItems.item === 'super_cola') {
-        user = await client.query('UPDATE users SET energy = 100 WHERE tg_id = $1 RETURNING tg_username, wallet_address, score, energy, joined_to_event;', [tg_id]);
-  
-        inventory = await client.query(`
-          UPDATE inventory
-          SET super_cola = CASE
-            WHEN super_cola - 1 < 0 THEN 0
-            ELSE super_cola - 1
-          END
-          WHERE tg_id = $1
-          RETURNING *;`, [tg_id]);
-          
-      } else if (gulpItems.item === 'yellow_cola') {
-        inventory = await client.query(`
-          UPDATE inventory
-          SET yellow_cola = CASE
-            WHEN yellow_cola - 1 < 0 THEN 0
-            ELSE yellow_cola - 1
-          END
-          WHERE tg_id = $1
-          RETURNING *;`, [tg_id]);
 
-          user = await client.query(`
-          UPDATE users
-          SET energy = CASE
-            WHEN energy + 50 <= 100 THEN energy + 50
-            ELSE 100
-          END
-          WHERE tg_id = $1
-          RETURNING tg_username, wallet_address, score, energy, joined_to_event;`, [tg_id]);
+      if (inventory[gulpItems.item] == 0) {
+        reply.status(422).send(new Error(`User have no ${gulpItems.item} in inventory`));
+        return;
       }
   
-      const updatedInventory = inventory.rows[0];
+      console.log(`GULP INPUT - User id: ${tg_id}, item: ${gulpItems.item}, cola: ${inventory.cola}, super_cola: ${inventory.super_cola}`);
+
+      const updatedInventoryResult = await client.query(`UPDATE inventory SET ${gulpItems.item} = ${gulpItems.item} - 1 WHERE tg_id = $1 RETURNING *;`, [tg_id]);
+
+      if (gulpItems?.game) {
+        const multipliers = {
+          'cola': 1,
+          'yellow_cola': 1.5,
+          'super_cola': 3
+        };
+
+        user = await client.query(
+          `UPDATE users SET active_game = $1, multiplier = $2 WHERE tg_id = $3 RETURNING *;`, 
+          [
+            gulpItems.game, 
+            multipliers[gulpItems.item],
+            tg_id
+          ]
+        );
+      } else {
+        switch (gulpItems.item) {
+          case 'super_cola':
+            user = await client.query('UPDATE users SET energy = 100 WHERE tg_id = $1 RETURNING tg_username, wallet_address, score, energy, joined_to_event;', [tg_id]);
+            break;
+
+          case 'yellow_cola':
+            user = await client.query(`
+              UPDATE users
+              SET energy = CASE
+                WHEN energy + 50 <= 100 THEN energy + 50
+                ELSE 100
+              END
+              WHERE tg_id = $1
+              RETURNING tg_username, wallet_address, score, energy, joined_to_event;`, [tg_id]
+            );
+
+            break;
+                  
+          default:
+            user = await client.query(`
+              UPDATE users
+              SET energy = CASE
+                WHEN energy + 25 <= 100 THEN energy + 25
+                ELSE 100
+              END,
+              first_day_drink = CASE
+                WHEN first_day_drink IS NULL THEN NOW()
+                WHEN first_day_drink <= NOW() - INTERVAL '24 hours' THEN NOW()
+                ELSE first_day_drink
+              END
+              WHERE tg_id = $1
+              RETURNING tg_username, wallet_address, score, energy, joined_to_event;`, [tg_id]
+            );
+
+            break;
+        }
+      }
+  
+      const updatedInventory = updatedInventoryResult.rows[0];
       const updatedUser = user.rows[0];
   
       console.log(`GULP OUTPUT - User id: ${tg_id}, item: ${gulpItems.item}, cola: ${updatedInventory.cola}, super_cola: ${updatedInventory.super_cola}`);
@@ -108,9 +113,10 @@ async function routes(fastify, options) {
   fastify.patch('/api/tap/:tg_id', (req, reply) => {
     return fastify.pg.transact(async client => {
       const tg_id = req.params.tg_id;
+
       let taps = parseInt(req.body.taps, 10);
   
-      const userResult = await client.query('SELECT score, energy FROM users WHERE tg_id = $1', [tg_id]);
+      const userResult = await client.query('SELECT score, energy, active_game FROM users WHERE tg_id = $1', [tg_id]);
       const user = userResult.rows[0];
   
       if (!user) {
@@ -123,30 +129,36 @@ async function routes(fastify, options) {
   
       console.log(`TAPS - User id: ${tg_id}, taps: ${taps}, energy: ${inventory?.energy}`);
   
-      if (+taps > user.energy) {
+      if (+taps > user.energy && user.active_game === 'tap') {
         taps = user.energy;
         reply.status(422).send(new Error('Invalid data'));
         return;
       }
   
-      const updatedInventoryResult = await client.query(
-        'UPDATE inventory SET donut = donut + $1 * 1000 WHERE tg_id = $2 RETURNING *',
-        [taps, tg_id]
-      );
-  
       const updatedUserResult = await client.query(
         `UPDATE users
-         SET score = score + $1 * 1000,
-             energy = energy - $1,
-             last_taps_count = $1,
+         SET score = score + $1,
+             energy = energy - $2,
+             last_taps_count = ${user.active_game === 'tap' ? +taps : 'last_taps_count - 0'},
+             active_game = 'tap',
+             multiplier = 1,
              updated_at = NOW(),
              event_score = CASE
-                           WHEN joined_to_event THEN event_score + $1 * 1000
+                           WHEN joined_to_event THEN event_score + $1
                            ELSE event_score
                            END
-         WHERE tg_id = $2
+         WHERE tg_id = $3
          RETURNING *`,
-        [taps, tg_id]
+        [
+          user.active_game === 'tap' ? (+taps * 1000) : +taps,
+          user.active_game === 'tap' ? +taps : 0, 
+          tg_id
+        ]
+      );
+  
+      const updatedInventoryResult = await client.query(
+        'UPDATE inventory SET donut = donut + $1 WHERE tg_id = $2 RETURNING *',
+        [user.active_game === 'tap' ? (+taps * 1000) : +taps, tg_id]
       );
   
       const updatedInventory = updatedInventoryResult.rows[0];

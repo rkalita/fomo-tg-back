@@ -49,7 +49,6 @@ async function routes(fastify, options) {
         reply.send(err);
       }
     });
-
   
     //GET ONE USER
     fastify.get('/api/users/:id', async (req, reply) => {
@@ -62,7 +61,7 @@ async function routes(fastify, options) {
         try {
           const userResult = await client.query(
             `SELECT users.tg_id, users.tg_username, users.wallet_address, users.score, users.event_score, users.energy, 
-                    users.first_day_drink, users.referral_code, users.joined_to_event, inventory.cola, inventory.super_cola, 
+                    users.first_day_drink, users.referral_code, users.joined_to_event, users.active_game, users.multiplier, inventory.cola, inventory.super_cola, 
                     inventory.yellow_cola, inventory.lootbox, inventory.donut, inventory.gold_donut,
                     inventory.nft, inventory.fomo, inventory.dumdum, inventory.exclusive_nft, inventory.apt 
               FROM users 
@@ -244,8 +243,36 @@ async function routes(fastify, options) {
       });
     });
 
+    //Switch the game
+    fastify.patch('/api/user-switch-game/:id', async (request, reply) => {
+      return fastify.pg.transact(async client => {
+        const userId = request.params.id;
+        const body = request.body;
 
-    
+        try {
+          const userResult = await client.query('SELECT * FROM users where tg_id=$1', [userId]);
+          const user = userResult?.rows[0] || null;
+
+          if (!user) {
+            console.error('User not found:', userId);
+            reply.status(404).send(new Error('User not found'));
+            return;
+          }
+
+          const updateUser = await client.query('UPDATE users SET active_game=$1, multiplier=1 RETURNING *', [body.game])
+
+          client.release();
+          reply.send(updateUser.rows[0]);
+        } catch (err) {
+          console.error('Connection error:', err);
+          reply.status(500).send(new Error('Internal Server Error'));
+        
+        }
+
+      })
+    })
+
+
     fastify.patch('/api/users-check', async (request, reply) => {
       try {
         await fastify.pg.transact(async client => {
