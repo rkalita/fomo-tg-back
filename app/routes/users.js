@@ -20,7 +20,7 @@ async function routes(fastify, options) {
                   FROM users 
                   WHERE users.event_score != 0 
                   ORDER BY users.event_score DESC, users.tg_username 
-                  LIMIT 10`;
+                  LIMIT 50`;
           } else {
             sql = `SELECT u.tg_id, u.tg_username, ue.score 
                   FROM users u 
@@ -33,7 +33,7 @@ async function routes(fastify, options) {
                       LIMIT 1
                   )
                   ORDER BY ue.score DESC 
-                  LIMIT 10`;
+                  LIMIT 50`;
           }
         } else {
           sql = `SELECT users.tg_id, users.tg_username, users.score 
