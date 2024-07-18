@@ -65,15 +65,9 @@ bot.start((ctx) => {
                 if (!error && response.statusCode == 200) {
                     ctx.reply(`You've already been registered.`, { 
                         parse_mode: 'HTML',
-                        reply_markup: {
-                            keyboard: [
-                                [
-                                    Markup.button.webApp('Open App', `${webAppUrl}/tap?tg_id=${chatId}`)
-                                ]
-                            ],
-                            resize_keyboard: true,
-                            one_time_keyboard: false
-                        }
+                        reply_markup: Markup.inlineKeyboard([
+                            Markup.button.webApp('Open App', `${webAppUrl}/tap?tg_id=${chatId}`)
+                        ])
                     });
                 } else {
                     const { question, answer } = generateCaptcha();
