@@ -252,8 +252,16 @@ async function routes(fastify, options) {
             [goldenDonutsCount, tgId]
           );
 
+          const activeEvent = await client.query(
+            `SELECT * FROM events WHERE (NOW() BETWEEN start_at AND finish_at) AND finished = false`
+          );
+
+          if (!activeEvent.rows[0]) {
+              return reply.status(404).send({ error: 'No active events found' });
+          }
+
           if (userJoinedToEvent) {
-            await client.query('UPDATE users_events set gold_donut=gold_donut + $1 WHERE tg_id=$2 AND finished = false', [goldenDonutsCount, tgId]);
+            await client.query('UPDATE users_events set gold_donut=gold_donut + $1 WHERE tg_id=$2 AND event_id = $3', [goldenDonutsCount, tgId, activeEvent.rpws[0].id]);
           }
 
           totalAmount += goldenDonutsCount;
