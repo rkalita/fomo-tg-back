@@ -244,7 +244,7 @@ bot.command('event_stop', (ctx) => {
         `http://0.0.0.0:3000/api/eventCheck?secret=${secret}`,
         function (error, response, body) {
             if (!error) {
-                ctx.reply(`Event has been stopped`);
+                ctx.reply(response?.body);
             } else {
                 ctx.reply(`Something went wrong: ${error}`);
             }
