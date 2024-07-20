@@ -81,7 +81,7 @@ async function routes(fastify, options) {
 
             const winners = await client.query(`select users.tg_id, users.tg_username, users.wallet_address, users_events.score, users_events.gold_donut, users_events.super_cola from users_events join users on users.tg_id=users_events.tg_id where event_id=$1 order by users_events.score desc limit 10;`, [activeEvent.rows[0].id]);
 
-            return reply.send(winners.rows[0]);
+            return reply.send(winners.rows);
         });
         } catch (error) {
             console.error('Error joining event:', error);
