@@ -56,166 +56,22 @@ async function routes(fastify, options) {
 
             // Define the loot items with exact counts
             const lootCounts = [
-                { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 10, group_id: 1 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 30, group_id: 1 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 16, group_id: 1 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 1 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 1 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 476, group_id: 1 },
-
-                { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 5, group_id: 2 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 15, group_id: 2 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 8, group_id: 2 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 1, group_id: 2 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 2 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 163, group_id: 2 },
-
-
-                { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 4, group_id: 3 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 8, group_id: 3 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 6, group_id: 3 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 2, group_id: 3 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 3 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 102, group_id: 3 },
-
-                { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 4 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 4, group_id: 4 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 4, group_id: 4 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 2, group_id: 4 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 4 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 54, group_id: 4 },
-
-                { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 5 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 4, group_id: 5 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 4, group_id: 5 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 2, group_id: 5 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 5 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 52, group_id: 5 },
-
-                { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 6 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 4, group_id: 6 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 4, group_id: 6 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 2, group_id: 6 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 6 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 47, group_id: 6 },
-
-                { apt: 0.1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 10, group_id: 7 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 7 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 5, group_id: 7 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 7 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 7 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 21, group_id: 7 },
-
-                { apt: 0.1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 5, group_id: 8 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 8 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 5, group_id: 8 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 8 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 8 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 13, group_id: 8 },
-
-                { apt: 0.1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 5, group_id: 9 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 9 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 5, group_id: 9 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 9 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 9 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 12, group_id: 9 },
-
-                { apt: 0.1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 10 },
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 10 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 5, group_id: 10 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 10 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 10 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 4, group_id: 10 },
-
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 11 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 5, group_id: 11 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 11 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 11 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 12 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 5, group_id: 12 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 12 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 12 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 13 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 5, group_id: 13 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 13 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 14 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 5, group_id: 14 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 14 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 15 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 5, group_id: 15 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 3, group_id: 15 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 16 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 3, group_id: 16 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 16 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 17 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 3, group_id: 17 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 17 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 18 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 3, group_id: 18 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 18 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 19 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 3, group_id: 19 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 19 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 20 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 20 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 21 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 21 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 22 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 22 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 23 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 23 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 24 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 24 },
-
-                { apt: null, fomo: null, nft: null, donut: 75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 25 },
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 25 },
-
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 26 },
-
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 27 },
-
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 3, group_id: 28 },
-
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 29 },
-
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 30 },
-
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 31 },
-
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 32 },
-
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 33 },
-
-                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 2, group_id: 34 },
-
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 35 },
-
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 36 },
-
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 37 },
-
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 38 },
-
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 39 },
-
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 40 },
-
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 41 },
-
-                { apt: null, fomo: null, nft: null, donut: 50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1, group_id: 42 },
+                { apt: 0.1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 100 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 1, yellow_cola: null, super_cola: null, dumdum: null, count: 400 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 2, yellow_cola: null, super_cola: null, dumdum: null, count: 200 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: 3, yellow_cola: null, super_cola: null, dumdum: null, count: 100 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 1, super_cola: null, dumdum: null, count: 1500 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 2, super_cola: null, dumdum: null, count: 600 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: 3, super_cola: null, dumdum: null, count: 300 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 1, dumdum: null, count: 400 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 2, dumdum: null, count: 200 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: 3, dumdum: null, count: 100 },
+                { apt: null, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 1500 }, // Empty Box
+                { apt: 1, fomo: null, nft: null, donut:null, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 10 },
+                { apt: null, fomo: null, nft: null, donut:50000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 500 },
+                { apt: null, fomo: null, nft: null, donut:75000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 300 },
+                { apt: null, fomo: null, nft: null, donut:150000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 100 },
+                { apt: null, fomo: null, nft: null, donut:300000, gold_donut: null, yellow_cola: null, super_cola: null, dumdum: null, count: 64 },
             ];
 
             // Function to shuffle an array
